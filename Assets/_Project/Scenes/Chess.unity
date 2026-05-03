@@ -184,12 +184,12 @@ MonoBehaviour:
   rules: {fileID: 125193297}
   grid: {fileID: 380684942}
   anim: {fileID: 125193296}
-  pawnPrefab: {fileID: 0}
-  knightPrefab: {fileID: 0}
-  bishopPrefab: {fileID: 0}
-  rookPrefab: {fileID: 0}
-  queenPrefab: {fileID: 0}
-  kingPrefab: {fileID: 0}
+  pawnPrefab: {fileID: 2077277551343133629, guid: c9ed5de13e431fc4f991a5c3fd3d03bc, type: 3}
+  knightPrefab: {fileID: 8271382825142067235, guid: f4002f50580c5e845a2682c99ab53546, type: 3}
+  bishopPrefab: {fileID: 541408124867281387, guid: a850793010d1f02468a446b5fbe2f1e8, type: 3}
+  rookPrefab: {fileID: 3015799958235597929, guid: 16f76847db8b9c8409424a57fe943815, type: 3}
+  queenPrefab: {fileID: 7078029162154268071, guid: 9e8498e8464ff844cb20522a34bdf39f, type: 3}
+  kingPrefab: {fileID: 3528793399759205698, guid: 117a534498726e44084b457fdc1530b2, type: 3}
   state: 0
 --- !u!114 &125193299
 MonoBehaviour:

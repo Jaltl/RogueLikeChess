@@ -16,12 +16,13 @@ public class Board : MonoBehaviour
         grid[x, y] = piece;
     }
 
-    public void MovePiece(Piece piece, int newX, int newY)
+    public void MovePiece(Piece piece, int x, int y)
     {
+        Debug.Log($"Board updated: {piece.type} at {x},{y}");
         grid[piece.x, piece.y] = null;
-        grid[newX, newY] = piece;
+        grid[x, y] = piece;
 
-        piece.SetPosition(newX, newY);
+        piece.SetPosition(x, y); // ONLY grid coords
     }
 
     public IEnumerable<Piece> GetAllPieces()
@@ -31,4 +32,3 @@ public class Board : MonoBehaviour
                 yield return p;
     }
 }
-

@@ -8,6 +8,53 @@ public class Rules : MonoBehaviour
 
     public Dictionary<PieceType, Vector2Int[]> Moves;
 
+    private void Awake()
+    {
+        Moves = new Dictionary<PieceType, Vector2Int[]>()
+    {
+        {PieceType.Knight, new Vector2Int[]
+            {
+                new Vector2Int(1, 2), new Vector2Int(2, 1),
+                new Vector2Int(-1, 2), new Vector2Int(-2, 1),
+                new Vector2Int(1, -2), new Vector2Int(2, -1),
+                new Vector2Int(-1, -2), new Vector2Int(-2, -1),
+            }
+        },
+
+        {PieceType.Bishop, new Vector2Int[]
+            {
+                new Vector2Int(1, 1), new Vector2Int(-1, 1),
+                new Vector2Int(1, -1), new Vector2Int(-1, -1),
+            }
+        },
+
+        {PieceType.Rook, new Vector2Int[]
+            {
+                new Vector2Int(1, 0), new Vector2Int(-1, 0),
+                new Vector2Int(0, 1), new Vector2Int(0, -1),
+            }
+        },
+
+        {PieceType.Queen, new Vector2Int[]
+            {
+                new Vector2Int(1, 0), new Vector2Int(-1, 0),
+                new Vector2Int(0, 1), new Vector2Int(0, -1),
+                new Vector2Int(1, 1), new Vector2Int(-1, 1),
+                new Vector2Int(1, -1), new Vector2Int(-1, -1),
+            }
+        },
+
+        {PieceType.King, new Vector2Int[]
+            {
+                new Vector2Int(1, 0), new Vector2Int(-1, 0),
+                new Vector2Int(0, 1), new Vector2Int(0, -1),
+                new Vector2Int(1, 1), new Vector2Int(-1, 1),
+                new Vector2Int(1, -1), new Vector2Int(-1, -1),
+            }
+        }
+    };
+    }
+
     public List<Vector2Int> GetLegalMoves(Piece piece)
     {
         var pseudo = GetPseudoMoves(piece);
@@ -19,6 +66,7 @@ public class Rules : MonoBehaviour
                 legal.Add(move);
         }
 
+        Debug.Log($"{piece.type} at {piece.x},{piece.y} pseudo:{pseudo.Count}");
         return legal;
     }
 
@@ -26,6 +74,7 @@ public class Rules : MonoBehaviour
 
     List<Vector2Int> GetPseudoMoves(Piece piece)
     {
+        //Debug.Log($"Getting pseudo moves for {piece.type} at ({piece.x}, {piece.y}) The Piece is {piece}");
         switch (piece.type)
         {
             case PieceType.Knight:
@@ -139,22 +188,24 @@ public class Rules : MonoBehaviour
     // Check SYSTEM 
 
     public bool IsInCheck(bool isWhite)
+{
+    var king = FindKing(isWhite);
+
+    foreach (var p in board.GetAllPieces())
     {
-        var king = FindKing(isWhite);
+        if (p.isWhite == isWhite) continue;
 
-        foreach (var p in board.GetAllPieces())
+        var moves = GetPseudoMoves(p); // OK because board is stable here
+
+        foreach (var m in moves)
         {
-            if (p.isWhite == isWhite) continue;
-
-            foreach (var m in GetPseudoMoves(p))
-            {
-                if (m.x == king.x && m.y == king.y)
-                    return true;
-            }
+            if (m.x == king.x && m.y == king.y)
+                return true;
         }
-
-        return false;
     }
+
+    return false;
+}
 
     public bool IsCheckmate(bool isWhite)
     {
@@ -181,19 +232,28 @@ public class Rules : MonoBehaviour
 
     bool SimulateMoveSafe(Piece piece, Vector2Int move)
     {
-        var captured = board.GetPiece(move.x, move.y);
+        Piece captured = board.GetPiece(move.x, move.y);
 
         int oldX = piece.x;
         int oldY = piece.y;
+
+        // simulate logically only
+        piece.x = move.x;
+        piece.y = move.y;
 
         board.SetPiece(oldX, oldY, null);
         board.SetPiece(move.x, move.y, piece);
 
         bool inCheck = IsInCheck(piece.isWhite);
 
+        // revert
         board.SetPiece(oldX, oldY, piece);
         board.SetPiece(move.x, move.y, captured);
 
+        piece.x = oldX;
+        piece.y = oldY;
+
+        Debug.Log($"Testing move {piece.type}: {piece.x},{piece.y} -> {move.x},{move.y}");
         return !inCheck;
     }
 

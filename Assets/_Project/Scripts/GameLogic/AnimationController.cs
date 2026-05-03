@@ -40,6 +40,7 @@ public class AnimationController : MonoBehaviour
     // MOVE PIECE
     public IEnumerator Move(Piece piece, Vector3 target)
     {
+        piece.transform.localScale = Vector3.one;
         float duration = 0.3f;
         float t = 0;
 
@@ -73,7 +74,7 @@ public class AnimationController : MonoBehaviour
             t += Time.deltaTime;
             yield return null;
         }
-        audioSource.PlayOneShot(moveSound);
+        //audioSource.PlayOneShot(moveSound);
         piece.transform.position = target;
         piece.transform.localScale = Vector3.one;
     }
@@ -101,7 +102,7 @@ public class AnimationController : MonoBehaviour
             t += Time.deltaTime;
             yield return null;
         }
-        audioSource.PlayOneShot(captureSound);
+        //audioSource.PlayOneShot(captureSound);
         CameraShake();
         Destroy(piece.gameObject);
     }
@@ -113,6 +114,7 @@ public class AnimationController : MonoBehaviour
         float t = 0;
 
         Vector3 baseScale = Vector3.one;
+        piece.transform.localScale = baseScale;
 
         while (t < duration)
         {

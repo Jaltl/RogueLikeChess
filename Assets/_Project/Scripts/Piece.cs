@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using static GameManager;
 public enum PieceType
 {
     Pawn = 1,
@@ -20,11 +19,10 @@ public class Piece : MonoBehaviour
     public bool hasMoved = false; // Track if the piece has moved (important for castling and pawn's first move)
 
 
-    public void SetPosition(int newX, int newY)
+    public void SetPosition(int x, int y)
     {
-        x = newX;
-        y = newY;
-        transform.position = new Vector3(x, y, 0);
+        this.x = x;
+        this.y = y;
     }
     //private void OnEnable()
     //{

@@ -1,3 +1,4 @@
+using UnityEditor.Search;
 using UnityEngine;
 
 public class GameController : MonoBehaviour
@@ -18,15 +19,32 @@ public class GameController : MonoBehaviour
     [SerializeField] private Piece queenPrefab;
     [SerializeField] private Piece kingPrefab;
 
-    public enum GameState { WhiteTurn, BlackTurn, End }
+    public enum GameState
+    {
+        Selecting,
+        PieceSelected,
+        Animating,
+        Promotion,
+        Checkmate,
+        Stalemate
+    }
+
+    public enum Player
+    {
+        White,
+        Black
+    }
+
+    public Player currentPlayer;
     public GameState state;
     private Tile lastFromTile;
     private Tile lastToTile;
+    public Vector2Int? enPassantTarget;
 
     private void Start()
     {
         SetupBoard();
-        state = GameState.WhiteTurn;
+        currentPlayer = Player.White;
     }
 
     private void SetupBoard()
@@ -67,13 +85,12 @@ public class GameController : MonoBehaviour
 
     private void SpawnPiece(Piece prefab, int x, int y, bool isWhite)
     {
-        Piece piece = Instantiate(prefab, new Vector3(x, y, 0), Quaternion.identity);
-
+        Piece piece = Instantiate(prefab);
         piece.isWhite = isWhite;
         piece.type = prefab.type;
         piece.SetPosition(x, y);
-
         board.SetPiece(x, y, piece);
+        piece.transform.position = GetWorldPosition(x, y);
     }
 
     public void OnTileClicked(Tile tile)
@@ -83,32 +100,33 @@ public class GameController : MonoBehaviour
         int x = tile.x;
         int y = tile.y;
 
-        var clicked = board.GetPiece(x, y);
-        bool whiteTurn = state == GameState.WhiteTurn;
+        Piece clicked = board.GetPiece(x, y);
+        bool whiteTurn = currentPlayer == Player.White;
 
+        // SELECT
         if (selected == null)
         {
             if (clicked != null && clicked.isWhite == whiteTurn)
             {
+                ClearHighlights();
+
                 selected = clicked;
                 Highlight(selected);
-
-                if (!anim.IsAnimating()) 
-                {
-                    anim.Play(anim.SelectPulse(selected));
-                    anim.PlaySoundSelect();
-                }
             }
             return;
         }
 
+        // RESELECT
         if (clicked != null && clicked.isWhite == whiteTurn)
         {
+            ClearHighlights();
+
             selected = clicked;
             Highlight(selected);
             return;
         }
 
+        // 🔹 TRY MOVE
         TryMove(x, y);
     }
 
@@ -125,58 +143,55 @@ public class GameController : MonoBehaviour
         }
 
         selected = null;
+        ClearHighlights();
     }
 
     void ExecuteMove(Piece piece, int x, int y)
     {
-        Tile fromTile = grid.GetTileAtPosition(new Vector2Int(piece.x, piece.y));
-        Tile toTile = grid.GetTileAtPosition(new Vector2Int(x, y));
+        state = GameState.Animating;
 
-        ClearLastMoveHighlight();
-
-        lastFromTile = fromTile;
-        lastToTile = toTile;
-
-        lastFromTile.SetLatestMoveHighlight(true);
-        lastToTile.SetLatestMoveHighlight(true);
-
+        Vector2Int from = new(piece.x, piece.y);
+        Vector2Int to = new(x, y);
 
         var target = board.GetPiece(x, y);
+
+        ClearHighlights();
 
         if (target != null)
             anim.Play(anim.Capture(target));
 
         board.MovePiece(piece, x, y);
 
-        anim.Play(anim.Move(piece, new Vector3(x, y)));
+        anim.Play(anim.Move(piece, GetWorldPosition(x, y)));
 
         piece.hasMoved = true;
 
-        SwitchTurn();
+        ShowLastMove(from, to);
 
+        currentPlayer = (currentPlayer == Player.White) ? Player.Black : Player.White;
         CheckGameState();
     }
 
     void SwitchTurn()
     {
-        state = (state == GameState.WhiteTurn)
-            ? GameState.BlackTurn
-            : GameState.WhiteTurn;
+        currentPlayer = (currentPlayer == Player.White)
+            ? Player.Black
+            : Player.White;
     }
 
     void CheckGameState()
     {
-        bool white = state == GameState.WhiteTurn;
+        bool white = currentPlayer == Player.White;
 
         if (rules.IsCheckmate(white))
         {
             Debug.Log("Checkmate");
-            state = GameState.End;
+            state = GameState.Checkmate;
         }
         else if (rules.IsStalemate(white))
         {
             Debug.Log("Stalemate");
-            state = GameState.End;
+            state = GameState.Stalemate;
         }
     }
 
@@ -185,17 +200,41 @@ public class GameController : MonoBehaviour
         foreach (var move in rules.GetLegalMoves(piece))
         {
             var tile = grid.GetTileAtPosition(move);
+            if (tile == null) continue;
 
-            if (board.GetPiece(move.x, move.y) == null)
-                tile.SetlegalHighlight(true);
+            var target = board.GetPiece(move.x, move.y);
+
+            if (target == null)
+                tile.ShowMove();
             else
-                tile.SetCaptureHighlight(true);
+                tile.ShowCapture();
         }
     }
 
     void ClearLastMoveHighlight()
     {
-        if (lastFromTile != null) lastFromTile.SetLatestMoveHighlight(false);
-        if (lastToTile != null) lastToTile.SetLatestMoveHighlight(false);
+        if (lastFromTile != null) lastFromTile.HideGlow();
+        //if (lastToTile != null) lastToTile.SetLatestMoveHighlight(false);
+    }
+
+    private void ClearHighlights()
+    {
+        foreach (var tile in grid.GetAllTiles())
+        {
+            tile.HideGlow();
+        }
+    }
+
+    Vector3 GetWorldPosition(int x, int y)
+    {
+        return new Vector3(x, y, 0);
+    }
+
+    void ShowLastMove(Vector2Int from, Vector2Int to)
+    {
+        ClearLastMoveHighlight();
+
+        grid.GetTileAtPosition(from)?.ShowLastMove();
+        //grid.GetTileAtPosition(to)?.ShowLastMove();
     }
 }
