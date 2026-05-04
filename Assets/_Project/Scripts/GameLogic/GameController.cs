@@ -1,5 +1,7 @@
 using UnityEditor.Search;
 using UnityEngine;
+using System.Collections.Generic;
+using System.Collections;
 
 public class GameController : MonoBehaviour
 {
@@ -8,6 +10,7 @@ public class GameController : MonoBehaviour
     [SerializeField] Rules rules;
     [SerializeField] Gridmanager grid;
     [SerializeField] AnimationController anim;
+    [SerializeField] PromotionUI promotionUI;
 
     private Piece selected;
 
@@ -39,7 +42,48 @@ public class GameController : MonoBehaviour
     public GameState state;
     private Tile lastFromTile;
     private Tile lastToTile;
+    //public struct EnPassantState
+    //{
+    //    public Vector2Int targetSquare;
+    //    public Vector2Int capturingPawnSquare;
+    //}
+    //public EnPassantState? enPassant;
+
+    //public Piece enPassantVictim;
     public Vector2Int? enPassantTarget;
+
+    public enum MoveType
+    {
+        Normal,
+        Capture,
+        DoublePawn,
+        EnPassant,
+        CastleKingSide,
+        CastleQueenSide,
+        Promotion
+    }
+
+    public struct Move
+    {
+        public Vector2Int from;
+        public Vector2Int to;
+
+        public MoveType type;
+
+        // optional extra data
+        public Vector2Int? captureSquare;
+        public bool isPromotion;
+
+        public Move(Vector2Int from, Vector2Int to, MoveType type)
+        {
+            this.from = from;
+            this.to = to;
+            this.type = type;
+
+            captureSquare = null;
+            isPromotion = false;
+        }
+    }
 
     private void Start()
     {
@@ -91,6 +135,10 @@ public class GameController : MonoBehaviour
         piece.SetPosition(x, y);
         board.SetPiece(x, y, piece);
         piece.transform.position = GetWorldPosition(x, y);
+        if(!isWhite)
+        {
+            piece.BlackTeam();
+        }
     }
 
     public void OnTileClicked(Tile tile)
@@ -126,17 +174,20 @@ public class GameController : MonoBehaviour
             return;
         }
 
-        // 🔹 TRY MOVE
+        // TRY MOVE
         TryMove(x, y);
     }
 
+
     void TryMove(int x, int y)
     {
-        foreach (var move in rules.GetLegalMoves(selected))
+        var moves = rules.GetLegalMoves(selected);
+
+        foreach (var m in moves)
         {
-            if (move.x == x && move.y == y)
+            if (m.to.x == x && m.to.y == y)
             {
-                ExecuteMove(selected, x, y);
+                ExecuteMove(selected, m);
                 selected = null;
                 return;
             }
@@ -146,30 +197,90 @@ public class GameController : MonoBehaviour
         ClearHighlights();
     }
 
-    void ExecuteMove(Piece piece, int x, int y)
+    void ExecuteMove(Piece piece, Move move)
     {
         state = GameState.Animating;
 
-        Vector2Int from = new(piece.x, piece.y);
-        Vector2Int to = new(x, y);
-
-        var target = board.GetPiece(x, y);
-
         ClearHighlights();
+        ClearLastMoveHighlight();
+
+        Piece target = ResolveTarget(move);
+        
+        enPassantTarget = null;
 
         if (target != null)
-            anim.Play(anim.Capture(target));
+        {
+            board.RemovePiece(target);
+        }
 
-        board.MovePiece(piece, x, y);
+        board.MovePiece(piece, move.to.x, move.to.y);
 
-        anim.Play(anim.Move(piece, GetWorldPosition(x, y)));
+        anim.Play(anim.Move(piece, GetWorldPosition(move.to.x, move.to.y)));
+
+        HandleSpecialMove(move, piece);
 
         piece.hasMoved = true;
 
-        ShowLastMove(from, to);
+        if (move.type == MoveType.DoublePawn)
+        {
+            int dir = piece.isWhite ? 1 : -1;
 
-        currentPlayer = (currentPlayer == Player.White) ? Player.Black : Player.White;
+            enPassantTarget = new Vector2Int(move.to.x, move.to.y - dir);
+            Vector2Int pawnSquare = move.to;
+        }
+        else
+        {
+            enPassantTarget = null;
+        }
+
+        if (target != null)
+        {
+            anim.Play(anim.Capture(target));
+        }
+
+        lastFromTile = grid.GetTileAtPosition(new Vector2Int(move.from.x, move.from.y));
+        ShowLastMove(move.from, move.to);
+
+        selected = null;
+        state = GameState.Selecting;
+        SwitchTurn();
+        //enPassantTarget = null;
         CheckGameState();
+    }
+
+    void HandleSpecialMove(Move move, Piece king)
+    {
+        switch (move.type)
+        {
+            case MoveType.CastleKingSide:
+                MoveRook(7, 5, king.y);
+                break;
+
+            case MoveType.CastleQueenSide:
+                MoveRook(0, 3, king.y);
+                break;
+
+            case MoveType.Promotion:
+                state = GameState.Promotion;
+                StartCoroutine(PromotionRoutine(king));
+                break;
+        }
+    }
+
+    public Piece ResolveTarget(Move move)
+    {
+        switch (move.type)
+        {
+            case MoveType.Capture:
+                return board.GetPiece(move.to.x, move.to.y);
+
+            case MoveType.EnPassant:
+                if (move.captureSquare.HasValue)
+                    return board.GetPiece(move.captureSquare.Value.x, move.captureSquare.Value.y);
+                break;
+        }
+
+        return null;
     }
 
     void SwitchTurn()
@@ -193,27 +304,34 @@ public class GameController : MonoBehaviour
             Debug.Log("Stalemate");
             state = GameState.Stalemate;
         }
+
+        HighlightCheck(white);
     }
 
     void Highlight(Piece piece)
     {
-        foreach (var move in rules.GetLegalMoves(piece))
+        var moves = rules.GetLegalMoves(piece);
+
+        foreach (var move in moves)
         {
-            var tile = grid.GetTileAtPosition(move);
+            var tile = grid.GetTileAtPosition(move.to);
             if (tile == null) continue;
 
-            var target = board.GetPiece(move.x, move.y);
-
-            if (target == null)
-                tile.ShowMove();
+            if (move.type == MoveType.Capture || move.type == MoveType.EnPassant)
+            {
+                tile.ShowCapture(true);
+            }
             else
-                tile.ShowCapture();
+            {
+                tile.ShowMove(true);
+            }
         }
     }
 
     void ClearLastMoveHighlight()
     {
-        if (lastFromTile != null) lastFromTile.HideGlow();
+        //Debug.Log("Tried to clear blue");
+        if (lastFromTile != null) lastFromTile.ShowLastMove(false);
         //if (lastToTile != null) lastToTile.SetLatestMoveHighlight(false);
     }
 
@@ -221,7 +339,7 @@ public class GameController : MonoBehaviour
     {
         foreach (var tile in grid.GetAllTiles())
         {
-            tile.HideGlow();
+            tile.ClearAllHighlight();
         }
     }
 
@@ -234,7 +352,80 @@ public class GameController : MonoBehaviour
     {
         ClearLastMoveHighlight();
 
-        grid.GetTileAtPosition(from)?.ShowLastMove();
+        grid.GetTileAtPosition(from)?.ShowLastMove(true);
         //grid.GetTileAtPosition(to)?.ShowLastMove();
+    }
+
+    void HighlightCheck(bool isWhite)
+    {
+        // CLEAR ALL check states first
+        foreach (var tile in grid.GetAllTiles())
+        {
+            tile.ClearCheck();
+        }
+
+        //Find king
+        Piece king = rules.FindKing(isWhite);
+        if (king == null) return;
+
+
+        //Apply if in check
+        if (rules.IsInCheck(isWhite))
+        {
+            Tile kingTile = grid.GetTileAtPosition(new Vector2Int(king.x, king.y));
+
+            if (kingTile != null)
+                kingTile.KingInCheck();
+        }
+    }
+
+    void HandleCastling(Piece king, Move move)
+    {
+        int dir = (move.to.x > move.from.x) ? 1 : -1;
+
+        int rookX = (dir == 1) ? 7 : 0;
+        int rookTargetX = king.x - dir;
+
+        Piece rook = board.GetPiece(rookX, king.y);
+        if (rook == null) return;
+
+        board.SetPiece(rookX, king.y, null);
+        board.SetPiece(rookTargetX, king.y, rook);
+
+        rook.SetPosition(rookTargetX, king.y);
+        anim.Play(anim.Move(rook, GetWorldPosition(rookTargetX, king.y)));
+    }
+
+    void MoveRook(int fromX, int toX, int y)
+    {
+        Piece rook = board.GetPiece(fromX, y);
+        if (rook == null) return;
+
+        board.SetPiece(fromX, y, null);
+        board.SetPiece(toX, y, rook);
+
+        rook.SetPosition(toX, y);
+
+        anim.Play(anim.Move(rook, GetWorldPosition(toX, y)));
+    }
+
+    IEnumerator PromotionRoutine(Piece pawn)
+    {
+        state = GameState.Promotion;
+
+        bool chosen = false;
+        PieceType result = PieceType.Queen;
+
+        promotionUI.Show(choice =>
+        {
+            result = choice;
+            chosen = true;
+        });
+
+        yield return new WaitUntil(() => chosen);
+
+        //ReplacePawn(pawn, result);
+
+        state = GameState.Selecting;
     }
 }

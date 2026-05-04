@@ -24,6 +24,13 @@ public class Piece : MonoBehaviour
         this.x = x;
         this.y = y;
     }
+
+    public void BlackTeam()
+    {
+        SpriteRenderer sr = GetComponentInChildren<SpriteRenderer>();
+        sr.material.color = Color.orange;
+        
+    }
     //private void OnEnable()
     //{
     //    if (isWhite)

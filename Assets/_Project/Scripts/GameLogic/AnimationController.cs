@@ -80,31 +80,30 @@ public class AnimationController : MonoBehaviour
     }
 
     // CAPTURE ENEMY PIECE
-    public IEnumerator Capture(Piece piece)
+    public IEnumerator Capture(Piece target)
     {
         float t = 0;
         float duration = 0.2f;
 
-        Vector3 startScale = piece.transform.localScale;
+        Vector3 startScale = target.transform.localScale;
 
         // quick "pop" before dying
-        piece.transform.localScale *= 1.2f;
+        target.transform.localScale *= 1.2f;
 
         while (t < duration)
         {
             float p = t / duration;
 
-            piece.transform.localScale =
+            target.transform.localScale =
                 Vector3.Lerp(startScale * 1.2f, Vector3.zero, p);
 
-            piece.transform.rotation *= Quaternion.Euler(0, 0, 10f);
+            target.transform.rotation *= Quaternion.Euler(0, 0, 10f);
 
             t += Time.deltaTime;
             yield return null;
         }
         //audioSource.PlayOneShot(captureSound);
         CameraShake();
-        Destroy(piece.gameObject);
     }
 
 
