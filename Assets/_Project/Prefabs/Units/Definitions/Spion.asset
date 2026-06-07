@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1a0430d09a8ad5419b0ed7d40fe2d45, type: 3}
+  m_Name: Spion
+  m_EditorClassIdentifier: Assembly-CSharp::UnitDefinition
+  unitName: Spion
+  icon: {fileID: -5036189002550504195, guid: 90fe2b057cd1e964cae5a12d288a45d7, type: 3}
+  unitPrefab: {fileID: 1463662199662474885, guid: 0cc42fd7aba10ee49acc3f87cad9be1b, type: 3}
+  cost: 1
+  placementExpansion: 4
