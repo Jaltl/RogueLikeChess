@@ -257,6 +257,7 @@ GameObject:
   - component: {fileID: 125193303}
   - component: {fileID: 125193302}
   - component: {fileID: 125193301}
+  - component: {fileID: 125193304}
   m_Layer: 0
   m_Name: GameSystems
   m_TagString: Untagged
@@ -293,6 +294,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlacementController
   grid: {fileID: 125193303}
   board: {fileID: 125193302}
+  blackAI: {fileID: 125193304}
 --- !u!114 &125193302
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -321,6 +323,31 @@ MonoBehaviour:
   height: 8
   hexPrefab: {fileID: 3537030216584712804, guid: 9138ca6575988cf47832e867bc1ccc66, type: 3}
   placementController: {fileID: 125193301}
+  renderTriangles: {fileID: 667209691}
+  baseHexRadius: 0.5
+  baseHexRotationDegrees: 0
+  cellRadius: 0.25
+  prefabRadiusAtScaleOne: 0.5
+  footprintPadding: 0.01
+--- !u!114 &125193304
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 125193295}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 481c96278e0a93c4488f98ceeb4fb163, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BlackPlacementAI
+  placementController: {fileID: 125193301}
+  unitPool:
+  - {fileID: 11400000, guid: 6877f7eb6c0939647842774220b6002e, type: 2}
+  - {fileID: 11400000, guid: 60ff9d55ea583d54c8dc87d44cdc7720, type: 2}
+  - {fileID: 11400000, guid: 719410e50ff4e7e4a9955856812f4e7e, type: 2}
+  - {fileID: 11400000, guid: ed1d406efd85cf345be82b099d8c0cda, type: 2}
+  placementDelay: 0.5
 --- !u!1 &248162071
 GameObject:
   m_ObjectHideFlags: 0
@@ -803,6 +830,56 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 364807785}
   m_CullTransparentMesh: 1
+--- !u!1 &667209690
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 667209694}
+  - component: {fileID: 667209691}
+  m_Layer: 0
+  m_Name: TriangleBackground
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &667209691
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 667209690}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4628d52759bf26e4b83bdedd38a38986, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::VisualTriangleRenderer
+  grid: {fileID: 125193303}
+  lineMaterial: {fileID: 2100000, guid: e6e267c9bec3a004f9ef5ce95cc9b295, type: 2}
+  lineWidth: 0.02
+  sortingLayerName: Default
+  sortingOrder: 50
+  zOffset: -0.1
+--- !u!4 &667209694
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 667209690}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 4.96702, y: 0.07456, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &678601305
 GameObject:
   m_ObjectHideFlags: 0
@@ -1981,3 +2058,4 @@ SceneRoots:
   - {fileID: 125193300}
   - {fileID: 338038423}
   - {fileID: 8392266618690070642}
+  - {fileID: 667209694}

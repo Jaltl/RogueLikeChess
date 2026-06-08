@@ -1,17 +1,23 @@
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.InputSystem;
 
 public class PlacementController : MonoBehaviour
 {
+    [Header("References")]
     [SerializeField] private HexGridManager grid;
     [SerializeField] private VirtualHexBoard board;
 
+    [Header("AI")]
+    [SerializeField] private BlackPlacementAI blackAI;
+
     private UnitDefinition selectedUnit;
     private PlayerSide currentPlayer = PlayerSide.White;
+    public bool HasSelectedUnit => selectedUnit != null;
 
-    private HashSet<Vector2Int> whitePlacementZone = new();
-    private HashSet<Vector2Int> blackPlacementZone = new();
+    private HashSet<HexTile> whitePlacementZone = new();
+    private HashSet<HexTile> blackPlacementZone = new();
+
+    public PlayerSide CurrentPlayer => currentPlayer;
 
     public void InitializePlacement()
     {
@@ -19,6 +25,8 @@ public class PlacementController : MonoBehaviour
 
         Debug.Log($"White zone count: {whitePlacementZone.Count}");
         Debug.Log($"Black zone count: {blackPlacementZone.Count}");
+
+        ShowCurrentPlacementZone();
     }
 
     void CreateInitialPlacementZones()
@@ -26,24 +34,24 @@ public class PlacementController : MonoBehaviour
         whitePlacementZone.Clear();
         blackPlacementZone.Clear();
 
-        foreach (var tile in grid.GetAllTiles())
+        foreach (HexTile tile in grid.GetAllTiles())
         {
             Vector2Int pos = tile.axial;
 
-            // Example:
-            // White starts near bottom
-            if (pos.y <= 1)
-                whitePlacementZone.Add(pos);
+            if (pos.y <= 2)
+                whitePlacementZone.Add(tile);
 
-            // Black starts near top
-            if (pos.y >= 6)
-                blackPlacementZone.Add(pos);
+            if (pos.y >= grid.Height - 3)
+                blackPlacementZone.Add(tile);
         }
     }
 
     public void SelectUnit(UnitDefinition unit)
     {
         selectedUnit = unit;
+
+        Debug.Log($"Selected unit: {unit.unitName}");
+
         HighlightPlacementTiles();
     }
 
@@ -52,46 +60,116 @@ public class PlacementController : MonoBehaviour
         if (selectedUnit == null)
             return;
 
-        Vector2Int pos = tile.axial;
-
-        if (!CanPlaceAt(pos))
+        if (!CanPlaceUnit(selectedUnit, tile))
             return;
 
-        PlaceSelectedUnit(pos);
+        PlaceSelectedUnit(tile);
     }
 
-    bool CanPlaceAt(Vector2Int pos)
+    bool CanPlaceUnit(UnitDefinition unitDef, HexTile anchorHex)
     {
-        if (board.HasUnit(pos))
+        return CanPlaceUnitForSide(unitDef, currentPlayer, anchorHex);
+    }
+
+    bool IsFootprintHexValid(HexTile hex, HashSet<HexTile> zone)
+    {
+        if (hex == null)
             return false;
 
-        return GetCurrentPlacementZone().Contains(pos);
+        if (!zone.Contains(hex))
+            return false;
+
+        if (hex.IsOccupied)
+            return false;
+
+        if (hex.IsBlockedTerrain)
+            return false;
+
+        return true;
     }
 
-    void PlaceSelectedUnit(Vector2Int pos)
+    bool CanPlaceUnitForSide(UnitDefinition unitDef, PlayerSide owner, HexTile anchorHex)
     {
-        Units unit = Instantiate(
-            selectedUnit.unitPrefab,
-            grid.AxialToWorld(pos),
-            Quaternion.identity
-        );
+        if (unitDef == null || anchorHex == null)
+            return false;
 
-        unit.Init(selectedUnit, currentPlayer, pos);
-        board.PlaceUnit(unit, pos);
+        List<HexTile> footprint =
+            grid.GetHexesOverlappedByUnit(anchorHex, unitDef);
 
-        ExpandPlacementZone(pos, selectedUnit.placementExpansion);
+        if (footprint.Count == 0)
+            return false;
+
+        HashSet<HexTile> zone = GetPlacementZone(owner);
+
+        foreach (HexTile hex in footprint)
+        {
+            if (!IsFootprintHexValid(hex, zone))
+                return false;
+        }
+
+        return true;
+    }
+
+    void PlaceSelectedUnit(HexTile anchorHex)
+    {
+        if (selectedUnit == null)
+            return;
+
+        UnitDefinition unitToPlace = selectedUnit;
+
+        bool placed = TryPlaceUnit(unitToPlace, currentPlayer, anchorHex);
+
+        if (!placed)
+            return;
 
         selectedUnit = null;
-
         ClearHighlights();
+        ClearPreview();
 
-        // Optional:
-        // SwitchTurn();
+        if (currentPlayer == PlayerSide.White && blackAI != null)
+        {
+            blackAI.PlaceAfterDelay();
+        }
     }
 
-    HashSet<Vector2Int> GetCurrentPlacementZone()
+    public bool TryPlaceUnit(UnitDefinition unitDef, PlayerSide owner, HexTile anchorHex)
     {
-        return currentPlayer == PlayerSide.White
+        if (unitDef == null || anchorHex == null)
+            return false;
+
+        if (!CanPlaceUnitForSide(unitDef, owner, anchorHex))
+            return false;
+
+        List<HexTile> overlappedHexes =
+            grid.GetHexesOverlappedByUnit(anchorHex, unitDef);
+
+        UnitPiece unit = Instantiate(unitDef.unitPrefab, anchorHex.hexCenter, Quaternion.Euler(0f, 0f, unitDef.footprintRotationDegrees));
+
+        unit.Init(unitDef, owner, anchorHex);
+
+        board.PlaceUnit(unit, anchorHex, overlappedHexes);
+
+        ExpandPlacementZoneFromOccupiedHexes(
+            overlappedHexes,
+            unitDef.placementExpansion,
+            owner
+        );
+
+        ShowCurrentPlacementZone();
+
+        Debug.Log($"{owner} placed {unitDef.unitName} at {anchorHex.axial}");
+
+        return true;
+    }
+
+    HashSet<HexTile> GetCurrentPlacementZone()
+    {
+        return GetPlacementZone(currentPlayer);
+    }
+
+    HashSet<HexTile> GetPlacementZone(PlayerSide side)
+    {
+        return side == PlayerSide.White
             ? whitePlacementZone
             : blackPlacementZone;
     }
@@ -99,23 +177,112 @@ public class PlacementController : MonoBehaviour
     void HighlightPlacementTiles()
     {
         ClearHighlights();
+        ClearPreview();
 
-        foreach (Vector2Int pos in GetCurrentPlacementZone())
+        if (selectedUnit == null)
+            return;
+
+        foreach (HexTile hex in GetCurrentPlacementZone())
         {
-            if (board.HasUnit(pos))
+            if (CanPlaceUnit(selectedUnit, hex))
+            {
+                hex.SetPlacementHighlight(true);
+            }
+        }
+    }
+
+    public void PreviewFootprint(HexTile anchorHex)
+    {
+        ClearPreview();
+
+        if (selectedUnit == null || anchorHex == null)
+            return;
+
+        List<HexTile> footprint =
+            grid.GetHexesOverlappedByUnit(anchorHex, selectedUnit);
+
+        HashSet<HexTile> zone = GetCurrentPlacementZone();
+
+        foreach (HexTile hex in footprint)
+        {
+            if (hex == null)
                 continue;
 
-            HexTile tile = grid.GetTile(pos);
-            if (tile != null)
-                tile.SetPlacementHighlight(true);
+            if (IsFootprintHexValid(hex, zone))
+            {
+                hex.SetFootprintPreview(true);
+            }
+            else
+            {
+                hex.SetInvalidPreview(true);
+            }
+        }
+    }
+
+    public void ClearPreview()
+    {
+        foreach (HexTile tile in grid.GetAllTiles())
+        {
+            tile.SetFootprintPreview(false);
+            tile.SetInvalidPreview(false);
         }
     }
 
     void ClearHighlights()
     {
-        foreach (var tile in grid.GetAllTiles())
+        foreach (HexTile tile in grid.GetAllTiles())
         {
             tile.SetPlacementHighlight(false);
+        }
+    }
+
+    public List<HexTile> GetValidPlacementTiles(UnitDefinition unitDef, PlayerSide side)
+    {
+        List<HexTile> validTiles = new();
+        HashSet<HexTile> zone = GetPlacementZone(side);
+
+        foreach (HexTile hex in zone)
+        {
+            if (CanPlaceUnitForSide(unitDef, side, hex))
+            {
+                validTiles.Add(hex);
+            }
+        }
+
+        return validTiles;
+    }
+
+    void ExpandPlacementZoneFromOccupiedHexes(
+        List<HexTile> occupiedHexes,
+        int range,
+        PlayerSide side)
+    {
+        HashSet<HexTile> zone = GetPlacementZone(side);
+
+        foreach (HexTile hex in occupiedHexes)
+        {
+            foreach (HexTile nearby in grid.GetHexesInRange(hex.axial, range))
+            {
+                zone.Add(nearby);
+            }
+        }
+    }
+
+    void ShowCurrentPlacementZone()
+    {
+        ClearZoneHighlights();
+
+        foreach (HexTile tile in GetCurrentPlacementZone())
+        {
+            tile.SetZoneHighlight(true);
+        }
+    }
+
+    void ClearZoneHighlights()
+    {
+        foreach (HexTile tile in grid.GetAllTiles())
+        {
+            tile.SetZoneHighlight(false);
         }
     }
 
@@ -124,52 +291,5 @@ public class PlacementController : MonoBehaviour
         currentPlayer = currentPlayer == PlayerSide.White
             ? PlayerSide.Black
             : PlayerSide.White;
-    }
-
-    void ExpandPlacementZone(Vector2Int center, int range)
-    {
-        HashSet<Vector2Int> zone = GetCurrentPlacementZone();
-
-        foreach (Vector2Int pos in GetHexesInRange(center, range))
-        {
-            if (grid.IsInside(pos))
-                zone.Add(pos);
-        }
-    }
-
-    List<Vector2Int> GetHexesInRange(Vector2Int center, int range)
-    {
-        List<Vector2Int> results = new();
-
-        for (int dq = -range; dq <= range; dq++)
-        {
-            for (int dr = -range; dr <= range; dr++)
-            {
-                Vector2Int pos = new Vector2Int(center.x + dq, center.y + dr);
-
-                if (HexDistance(center, pos) <= range)
-                    results.Add(pos);
-            }
-        }
-
-        return results;
-    }
-
-    int HexDistance(Vector2Int a, Vector2Int b)
-    {
-        // axial q,r converted to cube coordinates
-        int aq = a.x;
-        int ar = a.y;
-        int as_ = -aq - ar;
-
-        int bq = b.x;
-        int br = b.y;
-        int bs = -bq - br;
-
-        return Mathf.Max(
-            Mathf.Abs(aq - bq),
-            Mathf.Abs(ar - br),
-            Mathf.Abs(as_ - bs)
-        );
     }
 }
