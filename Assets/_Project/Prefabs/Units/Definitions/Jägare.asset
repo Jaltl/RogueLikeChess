@@ -17,3 +17,5 @@ MonoBehaviour:
   unitPrefab: {fileID: 6696038653400400348, guid: 286b4a1b053c2c047b2f212a0ad677a4, type: 3}
   cost: 0
   placementExpansion: 1
+  footprintRadius: 0.3
+  footprintRotationDegrees: 0
