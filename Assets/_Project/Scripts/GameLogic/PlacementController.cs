@@ -4,19 +4,21 @@ using UnityEngine;
 public class PlacementController : MonoBehaviour
 {
     [Header("References")]
-    [SerializeField] private HexGridManager grid;
-    [SerializeField] private VirtualHexBoard board;
+    [SerializeField] private PointGridManager grid;
 
     [Header("AI")]
     [SerializeField] private BlackPlacementAI blackAI;
 
+    [Header("Starting Zones")]
+    [SerializeField] private int startingZoneRows = 5;
+
     private UnitDefinition selectedUnit;
     private PlayerSide currentPlayer = PlayerSide.White;
+
+    private HashSet<GridPoint> whitePlacementZone = new();
+    private HashSet<GridPoint> blackPlacementZone = new();
+
     public bool HasSelectedUnit => selectedUnit != null;
-
-    private HashSet<HexTile> whitePlacementZone = new();
-    private HashSet<HexTile> blackPlacementZone = new();
-
     public PlayerSide CurrentPlayer => currentPlayer;
 
     public void InitializePlacement()
@@ -34,15 +36,15 @@ public class PlacementController : MonoBehaviour
         whitePlacementZone.Clear();
         blackPlacementZone.Clear();
 
-        foreach (HexTile tile in grid.GetAllTiles())
+        foreach (GridPoint point in grid.GetAllPoints())
         {
-            Vector2Int pos = tile.axial;
+            Vector2Int pos = point.coordinates;
 
-            if (pos.y <= 2)
-                whitePlacementZone.Add(tile);
+            if (pos.y < startingZoneRows)
+                whitePlacementZone.Add(point);
 
-            if (pos.y >= grid.Height - 3)
-                blackPlacementZone.Add(tile);
+            if (pos.y >= grid.Height - startingZoneRows)
+                blackPlacementZone.Add(point);
         }
     }
 
@@ -52,79 +54,74 @@ public class PlacementController : MonoBehaviour
 
         Debug.Log($"Selected unit: {unit.unitName}");
 
-        HighlightPlacementTiles();
+        ShowCurrentPlacementZone();
+        HighlightPlacementPoints();
     }
 
-    public void OnHexClicked(HexTile tile)
+    public void OnGridPointClicked(GridPoint point)
     {
         if (selectedUnit == null)
             return;
 
-        if (!CanPlaceUnit(selectedUnit, tile))
+        if (!CanPlaceUnit(selectedUnit, point))
             return;
 
-        PlaceSelectedUnit(tile);
+        PlaceSelectedUnit(point);
     }
 
-    bool CanPlaceUnit(UnitDefinition unitDef, HexTile anchorHex)
+    bool CanPlaceUnit(UnitDefinition unitDef, GridPoint anchorPoint)
     {
-        return CanPlaceUnitForSide(unitDef, currentPlayer, anchorHex);
+        return CanPlaceUnitForSide(unitDef, currentPlayer, anchorPoint);
     }
 
-    bool IsFootprintHexValid(HexTile hex, HashSet<HexTile> zone)
+    bool CanPlaceUnitForSide(UnitDefinition unitDef, PlayerSide owner, GridPoint anchorPoint)
     {
-        if (hex == null)
+        if (unitDef == null || anchorPoint == null)
             return false;
 
-        if (!zone.Contains(hex))
-            return false;
-
-        if (hex.IsOccupied)
-            return false;
-
-        if (hex.IsBlockedTerrain)
-            return false;
-
-        return true;
-    }
-
-    bool CanPlaceUnitForSide(UnitDefinition unitDef, PlayerSide owner, HexTile anchorHex)
-    {
-        if (unitDef == null || anchorHex == null)
-            return false;
-
-        List<HexTile> footprint =
-            grid.GetHexesOverlappedByUnit(anchorHex, unitDef);
+        List<GridPoint> footprint =
+            grid.GetPointsInsideUnitFootprint(anchorPoint, unitDef);
 
         if (footprint.Count == 0)
             return false;
 
-        HashSet<HexTile> zone = GetPlacementZone(owner);
+        HashSet<GridPoint> zone = GetPlacementZone(owner);
 
-        foreach (HexTile hex in footprint)
+        foreach (GridPoint point in footprint)
         {
-            if (!IsFootprintHexValid(hex, zone))
+            if (point == null)
+                return false;
+
+            if (!zone.Contains(point))
+                return false;
+
+            if (point.IsOccupied)
+                return false;
+
+            if (point.IsBlockedTerrain)
                 return false;
         }
 
         return true;
     }
 
-    void PlaceSelectedUnit(HexTile anchorHex)
+    void PlaceSelectedUnit(GridPoint anchorPoint)
     {
         if (selectedUnit == null)
             return;
 
         UnitDefinition unitToPlace = selectedUnit;
 
-        bool placed = TryPlaceUnit(unitToPlace, currentPlayer, anchorHex);
+        bool placed = TryPlaceUnit(unitToPlace, currentPlayer, anchorPoint);
 
         if (!placed)
             return;
 
         selectedUnit = null;
-        ClearHighlights();
+
+        ClearPlacementHighlights();
         ClearPreview();
+        ShowCurrentPlacementZone();
 
         if (currentPlayer == PlayerSide.White && blackAI != null)
         {
@@ -132,139 +129,113 @@ public class PlacementController : MonoBehaviour
         }
     }
 
-    public bool TryPlaceUnit(UnitDefinition unitDef, PlayerSide owner, HexTile anchorHex)
+    public bool TryPlaceUnit(UnitDefinition unitDef, PlayerSide owner, GridPoint anchorPoint)
     {
-        if (unitDef == null || anchorHex == null)
+        if (unitDef == null || anchorPoint == null)
             return false;
 
-        if (!CanPlaceUnitForSide(unitDef, owner, anchorHex))
+        if (!CanPlaceUnitForSide(unitDef, owner, anchorPoint))
             return false;
 
-        List<HexTile> overlappedHexes =
-            grid.GetHexesOverlappedByUnit(anchorHex, unitDef);
+        List<GridPoint> occupiedPoints =
+            grid.GetPointsInsideUnitFootprint(anchorPoint, unitDef);
 
-        UnitPiece unit = Instantiate(unitDef.unitPrefab, anchorHex.hexCenter, Quaternion.Euler(0f, 0f, unitDef.footprintRotationDegrees));
+        UnitPiece unit = Instantiate(
+            unitDef.unitPrefab,
+            anchorPoint.WorldPosition,
+            Quaternion.Euler(0f, 0f, unitDef.footprintRotationDegrees)
+        );
 
-        unit.Init(unitDef, owner, anchorHex);
+        unit.Init(unitDef, owner, anchorPoint);
+        unit.SetOccupiedPoints(occupiedPoints);
 
-        board.PlaceUnit(unit, anchorHex, overlappedHexes);
+        foreach (GridPoint point in occupiedPoints)
+        {
+            point.SetOccupyingUnit(unit);
+        }
 
-        ExpandPlacementZoneFromOccupiedHexes(
-            overlappedHexes,
+        ExpandPlacementZoneFromOccupiedPoints(
+            occupiedPoints,
             unitDef.placementExpansion,
             owner
         );
 
-        ShowCurrentPlacementZone();
-
-        Debug.Log($"{owner} placed {unitDef.unitName} at {anchorHex.axial}");
+        Debug.Log($"{owner} placed {unitDef.unitName} at {anchorPoint.coordinates}");
 
         return true;
     }
 
-    HashSet<HexTile> GetCurrentPlacementZone()
+    public List<GridPoint> GetValidPlacementPoints(UnitDefinition unitDef, PlayerSide side)
     {
-        return GetPlacementZone(currentPlayer);
-    }
+        List<GridPoint> validPoints = new();
+        HashSet<GridPoint> zone = GetPlacementZone(side);
 
-    HashSet<HexTile> GetPlacementZone(PlayerSide side)
-    {
-        return side == PlayerSide.White
-            ? whitePlacementZone
-            : blackPlacementZone;
-    }
-
-    void HighlightPlacementTiles()
-    {
-        ClearHighlights();
-        ClearPreview();
-
-        if (selectedUnit == null)
-            return;
-
-        foreach (HexTile hex in GetCurrentPlacementZone())
+        foreach (GridPoint point in zone)
         {
-            if (CanPlaceUnit(selectedUnit, hex))
+            if (CanPlaceUnitForSide(unitDef, side, point))
             {
-                hex.SetPlacementHighlight(true);
+                validPoints.Add(point);
             }
         }
+
+        return validPoints;
     }
 
-    public void PreviewFootprint(HexTile anchorHex)
+    public void PreviewFootprint(GridPoint anchorPoint)
     {
         ClearPreview();
 
-        if (selectedUnit == null || anchorHex == null)
+        if (selectedUnit == null || anchorPoint == null)
             return;
 
-        List<HexTile> footprint =
-            grid.GetHexesOverlappedByUnit(anchorHex, selectedUnit);
+        List<GridPoint> footprint =
+            grid.GetPointsInsideUnitFootprint(anchorPoint, selectedUnit);
 
-        HashSet<HexTile> zone = GetCurrentPlacementZone();
+        bool canPlace = CanPlaceUnit(selectedUnit, anchorPoint);
 
-        foreach (HexTile hex in footprint)
+        foreach (GridPoint point in footprint)
         {
-            if (hex == null)
+            if (point == null)
                 continue;
 
-            if (IsFootprintHexValid(hex, zone))
-            {
-                hex.SetFootprintPreview(true);
-            }
+            if (canPlace)
+                point.SetFootprintPreview(true);
             else
-            {
-                hex.SetInvalidPreview(true);
-            }
+                point.SetInvalidPreview(true);
         }
     }
 
     public void ClearPreview()
     {
-        foreach (HexTile tile in grid.GetAllTiles())
+        foreach (GridPoint point in grid.GetAllPoints())
         {
-            tile.SetFootprintPreview(false);
-            tile.SetInvalidPreview(false);
+            point.SetFootprintPreview(false);
+            point.SetInvalidPreview(false);
         }
     }
 
-    void ClearHighlights()
+    void HighlightPlacementPoints()
     {
-        foreach (HexTile tile in grid.GetAllTiles())
-        {
-            tile.SetPlacementHighlight(false);
-        }
-    }
+        ClearPlacementHighlights();
+        ClearPreview();
 
-    public List<HexTile> GetValidPlacementTiles(UnitDefinition unitDef, PlayerSide side)
-    {
-        List<HexTile> validTiles = new();
-        HashSet<HexTile> zone = GetPlacementZone(side);
+        if (selectedUnit == null)
+            return;
 
-        foreach (HexTile hex in zone)
+        foreach (GridPoint point in GetCurrentPlacementZone())
         {
-            if (CanPlaceUnitForSide(unitDef, side, hex))
+            if (CanPlaceUnit(selectedUnit, point))
             {
-                validTiles.Add(hex);
+                point.SetPlacementHighlight(true);
             }
         }
-
-        return validTiles;
     }
 
-    void ExpandPlacementZoneFromOccupiedHexes(
-        List<HexTile> occupiedHexes,
-        int range,
-        PlayerSide side)
+    void ClearPlacementHighlights()
     {
-        HashSet<HexTile> zone = GetPlacementZone(side);
-
-        foreach (HexTile hex in occupiedHexes)
+        foreach (GridPoint point in grid.GetAllPoints())
         {
-            foreach (HexTile nearby in grid.GetHexesInRange(hex.axial, range))
-            {
-                zone.Add(nearby);
-            }
+            point.SetPlacementHighlight(false);
         }
     }
 
@@ -272,17 +243,45 @@ public class PlacementController : MonoBehaviour
     {
         ClearZoneHighlights();
 
-        foreach (HexTile tile in GetCurrentPlacementZone())
+        foreach (GridPoint point in GetCurrentPlacementZone())
         {
-            tile.SetZoneHighlight(true);
+            point.SetZoneHighlight(true);
         }
     }
 
     void ClearZoneHighlights()
     {
-        foreach (HexTile tile in grid.GetAllTiles())
+        foreach (GridPoint point in grid.GetAllPoints())
         {
-            tile.SetZoneHighlight(false);
+            point.SetZoneHighlight(false);
+        }
+    }
+
+    HashSet<GridPoint> GetCurrentPlacementZone()
+    {
+        return GetPlacementZone(currentPlayer);
+    }
+
+    HashSet<GridPoint> GetPlacementZone(PlayerSide side)
+    {
+        return side == PlayerSide.White
+            ? whitePlacementZone
+            : blackPlacementZone;
+    }
+
+    void ExpandPlacementZoneFromOccupiedPoints(
+        List<GridPoint> occupiedPoints,
+        int range,
+        PlayerSide side)
+    {
+        HashSet<GridPoint> zone = GetPlacementZone(side);
+
+        foreach (GridPoint point in occupiedPoints)
+        {
+            foreach (GridPoint nearby in grid.GetNeighborsInRange(point.coordinates, range))
+            {
+                zone.Add(nearby);
+            }
         }
     }
 
@@ -291,5 +290,11 @@ public class PlacementController : MonoBehaviour
         currentPlayer = currentPlayer == PlayerSide.White
             ? PlayerSide.Black
             : PlayerSide.White;
+
+        selectedUnit = null;
+
+        ClearPlacementHighlights();
+        ClearPreview();
+        ShowCurrentPlacementZone();
     }
 }

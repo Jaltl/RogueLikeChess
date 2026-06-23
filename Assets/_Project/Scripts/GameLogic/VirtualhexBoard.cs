@@ -3,40 +3,40 @@ using UnityEngine;
 
 public class VirtualHexBoard : MonoBehaviour
 {
-    private Dictionary<HexTile, UnitPiece> unitsByAnchor = new();
+    private Dictionary<GridPoint, UnitPiece> unitsByAnchor = new();
 
-    public bool HasUnit(HexTile hex)
+    public bool HasUnit(GridPoint point)
     {
-        return hex != null && hex.IsOccupied;
+        return point != null && point.IsOccupied;
     }
 
-    public UnitPiece GetUnit(HexTile hex)
+    public UnitPiece GetUnit(GridPoint point)
     {
-       if(hex == null)
+       if(point == null)
         {
             return null;
         }
 
-        return hex.occupyingUnit;
+        return point.occupyingUnit;
     }
 
-    public void PlaceUnit(UnitPiece unit, HexTile anchorHex, List<HexTile> occupiedHexes)
+    public void PlaceUnit(UnitPiece unit, GridPoint anchorPoint, List<GridPoint> occupiedPoints)
     {
-        if(unit == null || anchorHex == null)
+        if(unit == null || anchorPoint == null)
         {
             return;
         }
 
-        unitsByAnchor[anchorHex] = unit;
+        unitsByAnchor[anchorPoint] = unit;
 
-        unit.SetAnchorHex(anchorHex);
-        unit.SetOccupiedHexes(occupiedHexes);
+        unit.SetAnchorPoint(anchorPoint);
+        unit.SetOccupiedPoints(occupiedPoints);
 
-        unit.transform.position = anchorHex.hexCenter;
+        unit.transform.position = anchorPoint.WorldPosition;
 
-        foreach (HexTile hex in occupiedHexes)
+        foreach (GridPoint point in occupiedPoints)
         {
-            hex.SetOccupied(unit);
+            point.SetOccupyingUnit(unit);
         }
     }
 
@@ -47,16 +47,16 @@ public class VirtualHexBoard : MonoBehaviour
             return;
         }
 
-        if(unit.anchorHex != null && unitsByAnchor.ContainsKey(unit.anchorHex))
+        if(unit.anchorPoint != null && unitsByAnchor.ContainsKey(unit.anchorPoint))
         {
-            unitsByAnchor.Remove(unit.anchorHex);
+            unitsByAnchor.Remove(unit.anchorPoint);
         }
 
-        foreach (HexTile hex in unit.occupiedHexes)
+        foreach (GridPoint point in unit.occupiedPoints)
         {
-            hex.ClearOccupied(unit);
+            point.ClearOccupyingUnit(unit);
         }
 
-        unit.ClearOccupiedHexes();
+        unit.ClearOccupiedPoints();
     }
 }

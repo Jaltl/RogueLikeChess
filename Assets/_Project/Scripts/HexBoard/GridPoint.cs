@@ -1,10 +1,10 @@
 using UnityEngine;
 
-public class HexTile : MonoBehaviour
+public class GridPoint : MonoBehaviour
 {
     [Header("Setup")]
-    public Vector2Int axial;
-    public Vector3 hexCenter => transform.position;
+    public Vector2Int coordinates;
+    public Vector3 WorldPosition => transform.position;
 
     [Header("Occupation")]
     public UnitPiece occupyingUnit;
@@ -14,36 +14,38 @@ public class HexTile : MonoBehaviour
     [SerializeField] private bool isBlockedTerrain;
     public bool IsBlockedTerrain => isBlockedTerrain;
 
+
     [Header("Highlights")]
+    [SerializeField] private GameObject zoneHighlight;
     [SerializeField] private GameObject placementHighlight;
     [SerializeField] private GameObject hoverHighlight;
     [SerializeField] private GameObject footprintPreview;
     [SerializeField] private GameObject invalidPreview;
-    [SerializeField] private GameObject zoneHighlight;
 
     private PlacementController placementController;
-
-    public void Init(Vector2Int axial, PlacementController controller)
+    
+    public void Init(Vector2Int coordinates, PlacementController controller)
     {
-        this.axial = axial;
+        this.coordinates = coordinates;
         placementController = controller;
 
+        SetZoneHighlight(false);
         SetPlacementHighlight(false);
         SetHoverHighlight(false);
-        SetFootprintPreview(false);
         SetInvalidPreview(false);
+        SetFootprintPreview(false);
     }
 
     private void OnMouseDown()
     {
-        //placementController.OnHexClicked(this);
+        placementController.OnGridPointClicked(this);
     }
 
     private void OnMouseEnter()
     {
         if (placementController.HasSelectedUnit)
         {
-            //placementController.PreviewFootprint(this);
+            placementController.PreviewFootprint(this);
         }
         else
         {
@@ -57,44 +59,56 @@ public class HexTile : MonoBehaviour
         placementController.ClearPreview();
     }
 
+    public void SetZoneHighlight(bool active)
+    {
+        if (zoneHighlight != null)
+        {
+            zoneHighlight.SetActive(active);
+        }
+    }
+
     public void SetPlacementHighlight(bool active)
     {
         if (placementHighlight != null)
+        {
             placementHighlight.SetActive(active);
-    }
-
-    public void SetFootprintPreview(bool active)
-    {
-        if (footprintPreview != null)
-            footprintPreview.SetActive(active);
-    }
-
-    public void SetInvalidPreview(bool active)
-    {
-        if (invalidPreview != null)
-            invalidPreview.SetActive(active);
+        }
     }
 
     public void SetHoverHighlight(bool active)
     {
         if (hoverHighlight != null)
+        {
             hoverHighlight.SetActive(active);
+        }
     }
 
-    public void SetZoneHighlight(bool active)
+    public void SetFootprintPreview(bool active)
     {
-        if (zoneHighlight != null)
-            zoneHighlight.SetActive(active);
+        if (footprintPreview != null)
+        {
+            footprintPreview.SetActive(active);
+        }
     }
 
-    public void SetOccupied(UnitPiece unit)
+    public void SetInvalidPreview(bool active)
+    {
+        if (invalidPreview != null)
+        {
+            invalidPreview.SetActive(active);
+        }
+    }
+
+    public void SetOccupyingUnit(UnitPiece unit)
     {
         occupyingUnit = unit;
     }
 
-    public void ClearOccupied(UnitPiece unit)
+    public void ClearOccupyingUnit(UnitPiece unit)
     {
         if (occupyingUnit == unit)
+        {
             occupyingUnit = null;
+        }
     }
 }
