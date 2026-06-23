@@ -37,16 +37,16 @@ public class BlackPlacementAI : MonoBehaviour
 
         UnitDefinition unit = unitPool[Random.Range(0, unitPool.Count)];
 
-        List<HexTile> validTiles =
-            placementController.GetValidPlacementTiles(unit, PlayerSide.Black);
+        List<GridPoint> validTiles =
+            placementController.GetValidPlacementPoints(unit, PlayerSide.Black);
 
         if (validTiles.Count == 0)
         {
-            Debug.LogWarning($"Black AI has no valid placement tiles for {unit.unitName}.");
+            Debug.LogWarning($"Black AI has no valid placement points for {unit.unitName}.");
             return;
         }
 
-        HexTile tile = validTiles[Random.Range(0, validTiles.Count)];
+        GridPoint tile = validTiles[Random.Range(0, validTiles.Count)];
 
         placementController.TryPlaceUnit(unit, PlayerSide.Black, tile);
     }

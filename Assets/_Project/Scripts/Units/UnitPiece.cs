@@ -12,28 +12,28 @@ public class UnitPiece : MonoBehaviour
     public UnitDefinition definition;
     public PlayerSide owner;
 
-    public HexTile anchorHex { get; private set; }
-    public List<HexTile> occupiedHexes { get; private set; } = new();
+    public GridPoint anchorPoint { get; private set; }
+    public List<GridPoint> occupiedPoints { get; private set; } = new();
 
-    public void Init(UnitDefinition definition, PlayerSide owner, HexTile anchor)
+    public void Init(UnitDefinition definition, PlayerSide owner, GridPoint anchorPoint)
     {
         this.definition = definition;
         this.owner = owner;
-        anchorHex = anchor;
+        this.anchorPoint = anchorPoint;
     }
 
-    public void SetOccupiedHexes(List<HexTile> hexes)
+    public void SetAnchorPoint(GridPoint point)
     {
-        occupiedHexes = hexes;
+        anchorPoint = point;
     }
 
-    public void ClearOccupiedHexes()
+    public void SetOccupiedPoints(List<GridPoint> points)
     {
-        occupiedHexes.Clear();
+        occupiedPoints = points;
     }
 
-    public void SetAnchorHex(HexTile hex)
+    public void ClearOccupiedPoints()
     {
-        anchorHex = hex;
+        occupiedPoints.Clear();
     }
 }

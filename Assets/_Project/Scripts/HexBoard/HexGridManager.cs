@@ -13,7 +13,7 @@ public class HexGridManager : MonoBehaviour
     [SerializeField] private VisualTriangleRenderer renderTriangles;
 
     [Header("Hex Shape")]
-    [SerializeField] private float baseHexRadius = 0.125f;
+    //[SerializeField] private float baseHexRadius = 0.125f;
     [SerializeField] private float baseHexRotationDegrees = 0f;
 
     [Header("Grid Scale")]

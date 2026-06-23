@@ -254,7 +254,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 125193300}
-  - component: {fileID: 125193303}
   - component: {fileID: 125193302}
   - component: {fileID: 125193301}
   - component: {fileID: 125193304}
@@ -292,9 +291,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6798eff68213b724ca43e2ab36605a44, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlacementController
-  grid: {fileID: 125193303}
-  board: {fileID: 125193302}
+  grid: {fileID: 931352381}
   blackAI: {fileID: 125193304}
+  startingZoneRows: 5
 --- !u!114 &125193302
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -307,28 +306,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 876e2f7539a6faf4892f18039b6ff2bc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VirtualHexBoard
---- !u!114 &125193303
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 125193295}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5195c919d4f794343a8dedc3a3453ed4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::HexGridManager
-  width: 8
-  height: 8
-  hexPrefab: {fileID: 3537030216584712804, guid: 9138ca6575988cf47832e867bc1ccc66, type: 3}
-  placementController: {fileID: 125193301}
-  renderTriangles: {fileID: 667209691}
-  baseHexRadius: 0.5
-  baseHexRotationDegrees: 0
-  cellRadius: 0.25
-  prefabRadiusAtScaleOne: 0.5
-  footprintPadding: 0.01
 --- !u!114 &125193304
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -859,12 +836,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4628d52759bf26e4b83bdedd38a38986, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VisualTriangleRenderer
-  grid: {fileID: 125193303}
+  grid: {fileID: 931352381}
   lineMaterial: {fileID: 2100000, guid: e6e267c9bec3a004f9ef5ce95cc9b295, type: 2}
   lineWidth: 0.02
-  sortingLayerName: Default
   sortingOrder: 50
   zOffset: -0.1
+  trianglePointWidth: 5
+  trianglePointHeight: 7
 --- !u!4 &667209694
 Transform:
   m_ObjectHideFlags: 0
@@ -1143,6 +1121,58 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 134019245215040770, guid: a587b22c142b07147a0e6cd445477e5c, type: 3}
   m_PrefabInstance: {fileID: 724547195}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &931352379
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 931352380}
+  - component: {fileID: 931352381}
+  m_Layer: 0
+  m_Name: PointGridContainer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &931352380
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 931352379}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &931352381
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 931352379}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4671873b195d2544cae70166572638ec, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PointGridManager
+  width: 33
+  height: 33
+  pointPrefab: {fileID: 5924203815156906733, guid: cab33f7e41f6da74b857f54eeaed6041, type: 3}
+  pointContainerPrefab: {fileID: 931352379}
+  pointSpacing: 0.25
+  rowSpacing: 0.2165
+  placementController: {fileID: 125193301}
+  renderTriangles: {fileID: 667209691}
 --- !u!1 &1043556505
 GameObject:
   m_ObjectHideFlags: 0
@@ -2059,3 +2089,4 @@ SceneRoots:
   - {fileID: 338038423}
   - {fileID: 8392266618690070642}
   - {fileID: 667209694}
+  - {fileID: 931352380}
