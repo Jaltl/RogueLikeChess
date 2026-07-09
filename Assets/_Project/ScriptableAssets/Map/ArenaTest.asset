@@ -1,0 +1,168 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca074ce129caff543945871f2571d001, type: 3}
+  m_Name: ArenaTest
+  m_EditorClassIdentifier: Assembly-CSharp::MapDefinition
+  triangleColumns: 37
+  triangleRows: 49
+  trianglePointWidth: 5
+  trianglePointHeight: 7
+  startRowsWithDownTriangle: 1
+  pointSpacing: 0.05
+  calculatedPointWidth: 77
+  calculatedPointHeight: 295
+  calculatedTriangleColumns: 37
+  calculatedTriangleRows: 49
+  calculatedCenterColumn: 18
+  calculatedCenterRow: 24
+  calculatedProfileColumns: 61
+  calculatedProfileCenterColumn: 30
+  stamps:
+  - enabled: 1
+    name: Main Body
+    mode: 0
+    region: 1
+    mirrorMode: 1
+    shapeType: 2
+    centerColumn: 18
+    profileKeys:
+    - row: 0
+      width: 31
+    - row: 2
+      width: 33
+    - row: 4
+      width: 35
+    - row: 6
+      width: 37
+    - row: 24
+      width: 37
+  - enabled: 1
+    name: White Start
+    mode: 2
+    region: 2
+    mirrorMode: 0
+    shapeType: 2
+    centerColumn: 18
+    profileKeys:
+    - row: 0
+      width: 31
+    - row: 2
+      width: 33
+    - row: 4
+      width: 35
+    - row: 6
+      width: 37
+    - row: 10
+      width: 37
+  - enabled: 1
+    name: Black Start
+    mode: 2
+    region: 3
+    mirrorMode: 0
+    shapeType: 2
+    centerColumn: 18
+    profileKeys:
+    - row: 38
+      width: 37
+    - row: 42
+      width: 37
+    - row: 44
+      width: 35
+    - row: 46
+      width: 33
+    - row: 48
+      width: 31
+  - enabled: 1
+    name: Center Objective
+    mode: 2
+    region: 6
+    mirrorMode: 0
+    shapeType: 2
+    centerColumn: 18
+    profileKeys:
+    - row: 16
+      width: 1
+    - row: 18
+      width: 5
+    - row: 20
+      width: 9
+    - row: 22
+      width: 13
+    - row: 24
+      width: 15
+    - row: 26
+      width: 13
+    - row: 28
+      width: 9
+    - row: 30
+      width: 5
+    - row: 32
+      width: 1
+  - enabled: 1
+    name: Left Objective
+    mode: 2
+    region: 4
+    mirrorMode: 0
+    shapeType: 3
+    centerColumn: 6
+    profileKeys:
+    - row: 16
+      width: 1
+    - row: 18
+      width: 5
+    - row: 20
+      width: 9
+    - row: 22
+      width: 11
+    - row: 24
+      width: 13
+    - row: 26
+      width: 11
+    - row: 28
+      width: 9
+    - row: 30
+      width: 5
+    - row: 32
+      width: 1
+  - enabled: 1
+    name: Right  Objective
+    mode: 2
+    region: 5
+    mirrorMode: 0
+    shapeType: 3
+    centerColumn: 30
+    profileKeys:
+    - row: 16
+      width: 1
+    - row: 18
+      width: 5
+    - row: 20
+      width: 9
+    - row: 22
+      width: 11
+    - row: 24
+      width: 13
+    - row: 26
+      width: 11
+    - row: 28
+      width: 9
+    - row: 30
+      width: 5
+    - row: 32
+      width: 1
+  neutralColor: {r: 0, g: 0, b: 0, a: 1}
+  whiteStartColor: {r: 0.8, g: 0.8, b: 0.8, a: 1}
+  blackStartColor: {r: 1, g: 0.35, b: 0.35, a: 1}
+  leftObjectiveColor: {r: 0, g: 1, b: 1, a: 1}
+  rightObjectiveColor: {r: 0, g: 1, b: 1, a: 1}
+  centerObjectiveColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  blockedColor: {r: 0.45, g: 0.25, b: 0.15, a: 1}

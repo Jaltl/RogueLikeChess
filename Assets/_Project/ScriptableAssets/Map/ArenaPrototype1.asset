@@ -1,0 +1,157 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca074ce129caff543945871f2571d001, type: 3}
+  m_Name: ArenaPrototype1
+  m_EditorClassIdentifier: Assembly-CSharp::MapDefinition
+  width: 65
+  height: 91
+  pointSpacing: 0.08
+  autoRowSpacing: 1
+  manualRowSpacing: 0.06928
+  trianglePointWidth: 5
+  trianglePointHeight: 7
+  stamps:
+  - enabled: 1
+    name: Main Body Bottom
+    mode: 0
+    region: 1
+    mirrorMode: 0
+    shapeType: 1
+    min: {x: 0, y: 0}
+    max: {x: 0, y: 0}
+    rowMin: 0
+    rowMax: 0
+    centerColumn: 8
+    bottomHalfWidth: 17
+    topHalfWidth: 30
+    center: {x: 0, y: 0}
+    halfWidth: 5
+    halfHeight: 5
+  - enabled: 1
+    name: Main Body Middle
+    mode: 0
+    region: 1
+    mirrorMode: 0
+    shapeType: 1
+    min: {x: 0, y: 0}
+    max: {x: 0, y: 0}
+    rowMin: 0
+    rowMax: 0
+    centerColumn: 8
+    bottomHalfWidth: 30
+    topHalfWidth: 30
+    center: {x: 0, y: 0}
+    halfWidth: 5
+    halfHeight: 5
+  - enabled: 1
+    name: Main Body Top
+    mode: 0
+    region: 1
+    mirrorMode: 0
+    shapeType: 1
+    min: {x: 0, y: 0}
+    max: {x: 0, y: 0}
+    rowMin: 0
+    rowMax: 0
+    centerColumn: 8
+    bottomHalfWidth: 17
+    topHalfWidth: 80
+    center: {x: 0, y: 0}
+    halfWidth: 5
+    halfHeight: 5
+  - enabled: 1
+    name: Black Start
+    mode: 2
+    region: 3
+    mirrorMode: 0
+    shapeType: 1
+    min: {x: 0, y: 0}
+    max: {x: 0, y: 0}
+    rowMin: 0
+    rowMax: 0
+    centerColumn: 8
+    bottomHalfWidth: 16
+    topHalfWidth: 25
+    center: {x: 0, y: 0}
+    halfWidth: 5
+    halfHeight: 5
+  - enabled: 1
+    name: White  Start
+    mode: 2
+    region: 2
+    mirrorMode: 0
+    shapeType: 1
+    min: {x: 0, y: 0}
+    max: {x: 0, y: 0}
+    rowMin: 0
+    rowMax: 0
+    centerColumn: 8
+    bottomHalfWidth: 16
+    topHalfWidth: 25
+    center: {x: 0, y: 0}
+    halfWidth: 5
+    halfHeight: 5
+  - enabled: 1
+    name: Center Objective
+    mode: 2
+    region: 6
+    mirrorMode: 0
+    shapeType: 3
+    min: {x: 0, y: 0}
+    max: {x: 0, y: 0}
+    rowMin: 0
+    rowMax: 0
+    centerColumn: 8
+    bottomHalfWidth: 10
+    topHalfWidth: 10
+    center: {x: 32, y: 45}
+    halfWidth: 7
+    halfHeight: 10
+  - enabled: 1
+    name: Left Objective
+    mode: 2
+    region: 4
+    mirrorMode: 0
+    shapeType: 1
+    min: {x: 0, y: 0}
+    max: {x: 0, y: 0}
+    rowMin: 0
+    rowMax: 0
+    centerColumn: 8
+    bottomHalfWidth: 10
+    topHalfWidth: 10
+    center: {x: 0, y: 0}
+    halfWidth: 0
+    halfHeight: 0
+  - enabled: 1
+    name: Right Objective
+    mode: 2
+    region: 5
+    mirrorMode: 0
+    shapeType: 1
+    min: {x: 0, y: 0}
+    max: {x: 0, y: 0}
+    rowMin: 0
+    rowMax: 0
+    centerColumn: 8
+    bottomHalfWidth: 10
+    topHalfWidth: 10
+    center: {x: 0, y: 0}
+    halfWidth: 0
+    halfHeight: 0
+  neutralColor: {r: 0, g: 0, b: 0, a: 1}
+  whiteStartColor: {r: 0.8, g: 0.8, b: 0.8, a: 1}
+  blackStartColor: {r: 1, g: 0.35, b: 0.35, a: 1}
+  leftObjectiveColor: {r: 0, g: 1, b: 1, a: 1}
+  rightObjectiveColor: {r: 0, g: 1, b: 1, a: 1}
+  centerObjectiveColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  blockedColor: {r: 0.45, g: 0.25, b: 0.15, a: 1}

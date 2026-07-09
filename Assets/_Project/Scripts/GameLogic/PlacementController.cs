@@ -5,6 +5,7 @@ public class PlacementController : MonoBehaviour
 {
     [Header("References")]
     [SerializeField] private PointGridManager grid;
+    [SerializeField] private VisualTriangleRenderer visualTriangles;
 
     [Header("AI")]
     [SerializeField] private BlackPlacementAI blackAI;
@@ -28,7 +29,8 @@ public class PlacementController : MonoBehaviour
         Debug.Log($"White zone count: {whitePlacementZone.Count}");
         Debug.Log($"Black zone count: {blackPlacementZone.Count}");
 
-        ShowCurrentPlacementZone();
+        //ShowCurrentPlacementZone();
+        HighlightPlacementPoints();
     }
 
     void CreateInitialPlacementZones()
@@ -79,8 +81,7 @@ public class PlacementController : MonoBehaviour
         if (unitDef == null || anchorPoint == null)
             return false;
 
-        List<GridPoint> footprint =
-            grid.GetPointsInsideUnitFootprint(anchorPoint, unitDef);
+        List<GridPoint> footprint = grid.GetPointsInsideUnitFootprint(anchorPoint, unitDef);
 
         if (footprint.Count == 0)
             return false;
@@ -90,6 +91,9 @@ public class PlacementController : MonoBehaviour
         foreach (GridPoint point in footprint)
         {
             if (point == null)
+                return false;
+
+            if (!point.IsActive)
                 return false;
 
             if (!zone.Contains(point))
@@ -186,7 +190,10 @@ public class PlacementController : MonoBehaviour
         ClearPreview();
 
         if (selectedUnit == null || anchorPoint == null)
+        {
+            RefreshVisuals();
             return;
+        }
 
         List<GridPoint> footprint =
             grid.GetPointsInsideUnitFootprint(anchorPoint, selectedUnit);
@@ -195,23 +202,23 @@ public class PlacementController : MonoBehaviour
 
         foreach (GridPoint point in footprint)
         {
-            if (point == null)
-                continue;
-
             if (canPlace)
                 point.SetFootprintPreview(true);
             else
                 point.SetInvalidPreview(true);
-        }
     }
+
+    RefreshVisuals();
+}
 
     public void ClearPreview()
     {
         foreach (GridPoint point in grid.GetAllPoints())
         {
-            point.SetFootprintPreview(false);
-            point.SetInvalidPreview(false);
+            point.ClearPreview();
         }
+
+        RefreshVisuals();
     }
 
     void HighlightPlacementPoints()
@@ -256,6 +263,38 @@ public class PlacementController : MonoBehaviour
             point.SetZoneHighlight(false);
         }
     }
+
+    public void OnGridPointHoverEnter(GridPoint point)
+{
+    if (point == null)
+        return;
+
+    if (HasSelectedUnit)
+    {
+        PreviewFootprint(point);
+    }
+    else
+    {
+        point.SetHoverHighlight(true);
+        RefreshVisuals();
+    }
+}
+
+public void OnGridPointHoverExit(GridPoint point)
+{
+    if (point == null)
+        return;
+
+    point.SetHoverHighlight(false);
+    ClearPreview();
+    RefreshVisuals();
+}
+
+void RefreshVisuals()
+{
+    if (visualTriangles != null)
+        visualTriangles.RefreshLineColors();
+}
 
     HashSet<GridPoint> GetCurrentPlacementZone()
     {

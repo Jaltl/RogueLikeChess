@@ -1,30 +1,28 @@
 using UnityEngine;
 using System.Collections.Generic;
-using System.Collections;
 
 public class PointGridManager : MonoBehaviour
 {
-    [Header("Grid")]
-    [SerializeField] private int width = 128;
-    [SerializeField] private int height = 128;
-    [SerializeField] private GridPoint pointPrefab;
-    [SerializeField] private GameObject pointContainerPrefab;
+    [Header("Map")]
+    [SerializeField] private MapDefinition mapDefinition;
 
-    [Header("Spacing")]
-    [SerializeField] private float pointSpacing = 0.25f;
-    [Tooltip("Spacing between rows, should be point spacing * sqrt(3)/2")]
-    [SerializeField] private float rowSpacing = 0.2165f; // point spacing * sqrt(3)/2
+    [Header("Prefabs")]
+    [SerializeField] private GridPoint pointPrefab;
 
     [Header("References")]
     [SerializeField] private PlacementController placementController;
     [SerializeField] private VisualTriangleRenderer renderTriangles;
+    [SerializeField] private MapGenerator mapGenerator;
 
     private Dictionary<Vector2Int, GridPoint> points = new();
 
-    public int Width => width;
-    public int Height => height;
-    public float PointSpacing => pointSpacing;
-    public float RowSpacing => rowSpacing;
+    public MapDefinition MapDefinition => mapDefinition;
+
+    public int Width => mapDefinition != null ? mapDefinition.PointWidth : 0;
+    public int Height => mapDefinition != null ? mapDefinition.PointHeight : 0;
+
+    public float PointSpacing => mapDefinition != null ? mapDefinition.pointSpacing : 0f;
+    public float RowSpacing => mapDefinition != null ? mapDefinition.RowSpacing : 0f;
 
     private void Start()
     {
@@ -33,23 +31,35 @@ public class PointGridManager : MonoBehaviour
 
     void GenerateGrid()
     {
+
+        if (mapDefinition == null)
+        {
+            Debug.LogError("MapDefinition is not assigned in PointGridManager.");
+            return;
+        }
+
+        ClearExistingGrid();
         points.Clear();
 
-        for (int x = 0; x < width; x++)
+        for (int y = 0; y < mapDefinition.PointHeight; y++)
         {
-            for (int y = 0; y < height; y++)
+            for (int x = 0; x < mapDefinition.PointWidth; x++)
             {
                 Vector2Int coordinates = new Vector2Int(x, y);
-                Vector3 worldPos = new Vector3(x * pointSpacing, y * rowSpacing, 0f);
+                Vector3 worldPos = CoordinatesToWorldPosition(coordinates);
 
                 GridPoint point = Instantiate(pointPrefab, worldPos, Quaternion.identity, transform);
 
-                point.transform.SetParent(pointContainerPrefab.transform, true);
                 point.name = $"Point {x},{y}";
                 point.Init(coordinates, placementController);
 
                 points[coordinates] = point;
             }
+        }
+
+        if (mapGenerator != null)
+        {
+            mapGenerator.GenerateMap(mapDefinition);
         }
 
         if (renderTriangles != null)
@@ -63,14 +73,18 @@ public class PointGridManager : MonoBehaviour
         }
     }
 
+    private void ClearExistingGrid()
+    {
+        foreach (Transform child in transform)
+        {
+            Destroy(child.gameObject);
+        }
+    }
+
     public Vector3 CoordinatesToWorldPosition(Vector2Int coordinates)
     {
-        int x = coordinates.x;
-        int y = coordinates.y;
-
-        // Calculate the world position based on the point spacing and row spacing
-        float worldX = x * pointSpacing + (y % 2 == 0 ? 0f : pointSpacing / 2f);
-        float worldY = y * rowSpacing;
+        float worldX = coordinates.x * PointSpacing;
+        float worldY = coordinates.y * RowSpacing;
 
         return new Vector3(worldX, worldY, 0f);
     }
@@ -81,7 +95,7 @@ public class PointGridManager : MonoBehaviour
         return point;
     }
 
-     public GridPoint GetPoint(Vector2Int coord)
+    public GridPoint GetPoint(Vector2Int coord)
     {
         points.TryGetValue(coord, out GridPoint point);
         return point;
@@ -142,50 +156,18 @@ public class PointGridManager : MonoBehaviour
     {
         List<GridPoint> neighborsInRange = new();
 
-        if (!points.ContainsKey(center))
+        foreach (GridPoint point in GetAllPoints())
         {
-            return neighborsInRange; // Return empty list if center point is not valid
-        }   
+            if (!point.IsActive)
+                continue;
 
-        Queue<(Vector2Int coordinates, int distance)> queue = new();
-        HashSet<Vector2Int> visited = new();
+            int dx = Mathf.Abs(point.coordinates.x - center.x);
+            int dy = Mathf.Abs(point.coordinates.y - center.y);
 
-        queue.Enqueue((center, 0));
-        visited.Add(center);
-
-        while (queue.Count > 0)
-        {
-            var current = queue.Dequeue();
-
-            GridPoint currentPoint = GetPointAtCoordinates(current.coordinates);
-            if (currentPoint != null)// && current.distance > 0) // Exclude the center point itself
-            {
-                neighborsInRange.Add(currentPoint);
-            }
-
-            if (current.distance > range)
-            {
-                continue; // Skip further processing if the distance exceeds the range
-            }   
-
-            foreach (Vector2Int dir in GetNeighborDirections(current.coordinates))
-            {
-                Vector2Int neighborCoord = current.coordinates + dir;
-
-                if (!IsInside(neighborCoord))
-                {
-                    continue; // Skip if the neighbor is outside the grid
-                }
-
-                if (visited.Contains(neighborCoord))
-                {
-                    continue; // Skip if the neighbor has already been visited
-                }
-
-                visited.Add(neighborCoord);
-                queue.Enqueue((neighborCoord, current.distance + 1));
-            }
+            if (dx + dy <= range)
+                neighborsInRange.Add(point);
         }
+
         return neighborsInRange;
     }
 
@@ -193,18 +175,22 @@ public class PointGridManager : MonoBehaviour
     {
         List<GridPoint> pointsInsideFootprint = new();
 
+        if (centerPoint == null || unitDef == null)
+            return pointsInsideFootprint;
+
         Vector3[] unitPolygon = GetHexPolygon(
-        centerPoint.WorldPosition, 
-        unitDef.footprintRadius, 
-        unitDef.footprintRotationDegrees
+            centerPoint.WorldPosition, 
+            unitDef.footprintRadius, 
+            unitDef.footprintRotationDegrees
         );
 
         foreach (GridPoint point in GetAllPoints())
         {
+            if (!point.IsActive)
+                continue;
+
             if (IsPointInsidePolygon(point.WorldPosition, unitPolygon))
-            {
                 pointsInsideFootprint.Add(point);
-            }
         }
 
         return pointsInsideFootprint;
@@ -217,6 +203,7 @@ public class PointGridManager : MonoBehaviour
         for (int i = 0; i < 6; i++)
         {
             float angle = Mathf.Deg2Rad * (rotationDegrees + 60f * i);
+
             vertices[i] = new Vector3(
                 radius * Mathf.Cos(angle),
                 radius * Mathf.Sin(angle),
@@ -242,5 +229,11 @@ public class PointGridManager : MonoBehaviour
         }
 
         return inside;
+    }
+
+    [ContextMenu("Regenerate Grid From Map Definition")]
+    public void RegenerateGridFromMapDefinition()
+    {
+        GenerateGrid();
     }
 }
