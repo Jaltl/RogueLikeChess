@@ -13,17 +13,17 @@ MonoBehaviour:
   m_Name: ArenaTest
   m_EditorClassIdentifier: Assembly-CSharp::MapDefinition
   triangleColumns: 37
-  triangleRows: 49
+  triangleRows: 50
   trianglePointWidth: 5
   trianglePointHeight: 7
   startRowsWithDownTriangle: 1
   pointSpacing: 0.05
   calculatedPointWidth: 77
-  calculatedPointHeight: 295
+  calculatedPointHeight: 301
   calculatedTriangleColumns: 37
-  calculatedTriangleRows: 49
+  calculatedTriangleRows: 50
   calculatedCenterColumn: 18
-  calculatedCenterRow: 24
+  calculatedCenterRow: 25
   calculatedProfileColumns: 61
   calculatedProfileCenterColumn: 30
   stamps:
