@@ -144,25 +144,25 @@ public class PlacementController : MonoBehaviour
         List<GridPoint> occupiedPoints =
             grid.GetPointsInsideUnitFootprint(anchorPoint, unitDef);
 
-        UnitPiece unit = Instantiate(
-            unitDef.unitPrefab,
-            anchorPoint.WorldPosition,
-            Quaternion.Euler(0f, 0f, unitDef.footprintRotationDegrees)
-        );
+        // UnitPiece unit = Instantiate(
+        //     unitDef.unitPrefab,
+        //     anchorPoint.WorldPosition,
+        //     Quaternion.Euler(0f, 0f, unitDef.footprintRotationDegrees)
+        // );
 
-        unit.Init(unitDef, owner, anchorPoint);
-        unit.SetOccupiedPoints(occupiedPoints);
+        // unit.Init(unitDef, owner, anchorPoint);
+        // unit.SetOccupiedPoints(occupiedPoints);
 
-        foreach (GridPoint point in occupiedPoints)
-        {
-            point.SetOccupyingUnit(unit);
-        }
+        // foreach (GridPoint point in occupiedPoints)
+        // {
+        //     point.SetOccupyingUnit(unit);
+        // }
 
-        ExpandPlacementZoneFromOccupiedPoints(
-            occupiedPoints,
-            unitDef.placementExpansion,
-            owner
-        );
+        // ExpandPlacementZoneFromOccupiedPoints(
+        //     occupiedPoints,
+        //     unitDef.placementExpansion,
+        //     owner
+        // );
 
         Debug.Log($"{owner} placed {unitDef.unitName} at {anchorPoint.coordinates}");
 

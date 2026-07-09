@@ -33,7 +33,7 @@ public class UnitCardUI : MonoBehaviour
 
         icon.sprite = unit.icon;
         nameText.text = unit.unitName;
-        costText.text = unit.cost.ToString();
+        costText.text = unit.Cost.ToString();
 
         button.onClick.AddListener(OnClicked);
     }

@@ -29,6 +29,7 @@ public class TriangleNode
     public Vector3 worldPosition;
 
     public readonly List<TriangleCell> ownerTriangles = new();
+    public readonly HashSet<UnitAnchorType> supportedUnitAnchors = new();
 
     private bool placement;
     private bool hover;
@@ -57,6 +58,16 @@ public class TriangleNode
     {
         if (triangle != null && !ownerTriangles.Contains(triangle))
             ownerTriangles.Add(triangle);
+    }
+
+     public void RegisterUnitAnchorType(UnitAnchorType anchorType)
+    {
+        supportedUnitAnchors.Add(anchorType);
+    }
+
+    public bool SupportsUnitAnchorType(UnitAnchorType anchorType)
+    {
+        return supportedUnitAnchors.Contains(anchorType);
     }
 
     public void SetState(TriangleNodeVisualState state, bool active)

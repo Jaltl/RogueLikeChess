@@ -159,11 +159,11 @@ public class HexGridManager : MonoBehaviour
     {
         List<HexTile> result = new();
 
-        Vector3[] unitPolygon = GetHexPolygon(
-            anchorHex.hexCenter,
-            unitDef.footprintRadius + footprintPadding,
-            unitDef.footprintRotationDegrees
-        );
+        // Vector3[] unitPolygon = GetHexPolygon(
+        //     anchorHex.hexCenter,
+        //     unitDef.footprintRadius + footprintPadding,
+        //     unitDef.footprintRotationDegrees
+        // );
 
         foreach (HexTile tile in GetAllTiles())
         {
@@ -173,8 +173,8 @@ public class HexGridManager : MonoBehaviour
                 baseHexRotationDegrees
             );
 
-            if (PolygonsOverlap(unitPolygon, tilePolygon))
-                result.Add(tile);
+            // if (PolygonsOverlap(unitPolygon, tilePolygon))
+            //     result.Add(tile);
         }
 
         return result;

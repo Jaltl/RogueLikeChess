@@ -84,15 +84,21 @@ public class TriangleGridManager : MonoBehaviour
         cell.corners[1] = GetOrCreateNode(cornerPositions[1]);
         cell.corners[2] = GetOrCreateNode(cornerPositions[2]);
 
+        cell.corners[0].RegisterUnitAnchorType(UnitAnchorType.Corner);
+        cell.corners[1].RegisterUnitAnchorType(UnitAnchorType.Corner);
+        cell.corners[2].RegisterUnitAnchorType(UnitAnchorType.Corner);
+
         cell.sideMidpoints[0] = GetOrCreateNode((cornerPositions[0] + cornerPositions[1]) * 0.5f);
         cell.sideMidpoints[1] = GetOrCreateNode((cornerPositions[1] + cornerPositions[2]) * 0.5f);
         cell.sideMidpoints[2] = GetOrCreateNode((cornerPositions[2] + cornerPositions[0]) * 0.5f);
 
-        // Centroid:
-        // For an Up triangle this is 1/3 from bottom base toward top.
-        // For a Down triangle this is 1/3 from top base toward bottom.
-        Vector3 center = (cornerPositions[0] + cornerPositions[1] + cornerPositions[2]) / 3f;
-        cell.center = GetOrCreateNode(center);
+        cell.sideMidpoints[0].RegisterUnitAnchorType(UnitAnchorType.SideMidpoint);
+        cell.sideMidpoints[1].RegisterUnitAnchorType(UnitAnchorType.SideMidpoint);
+        cell.sideMidpoints[2].RegisterUnitAnchorType(UnitAnchorType.SideMidpoint);
+
+Vector3 center = (cornerPositions[0] + cornerPositions[1] + cornerPositions[2]) / 3f;
+cell.center = GetOrCreateNode(center);
+cell.center.RegisterUnitAnchorType(UnitAnchorType.TriangleCenter);
 
         foreach (TriangleNode node in cell.AllNodes)
             node.AddOwner(cell);
@@ -101,20 +107,24 @@ public class TriangleGridManager : MonoBehaviour
     }
 
     TriangleOrientation GetOrientation(Vector2Int coord)
-{
-    bool evenColumn = IsEven(coord.x);
+    {
+        bool evenColumn = IsEven(coord.x);
 
-    bool isUp = mapDefinition.firstColumnIsUp
-        ? evenColumn
-        : !evenColumn;
+        bool isUp = mapDefinition.firstColumnIsUp
+            ? evenColumn
+            : !evenColumn;
 
-    return isUp ? TriangleOrientation.Up : TriangleOrientation.Down;
-}
+        // The top half is a literal phase mirror of the bottom half.
+        if (mapDefinition.IsMirroredHalfRow(coord.y))
+            isUp = !isUp;
 
-bool IsEven(int value)
-{
-    return Mathf.Abs(value % 2) == 0;
-}
+        return isUp ? TriangleOrientation.Up : TriangleOrientation.Down;
+    }
+
+    bool IsEven(int value)
+    {
+        return Mathf.Abs(value % 2) == 0;
+    }
 
     Vector3[] GetCornerPositions(Vector2Int coord, TriangleOrientation orientation)
     {
@@ -125,7 +135,7 @@ bool IsEven(int value)
         float x = coord.x * halfSide;
         float y = coord.y * height;
 
-        if (mapDefinition.offsetEveryOtherRow && coord.y % 2 == 1)
+        if (mapDefinition.IsOffsetRow(coord.y))
             x += halfSide;
 
         if (orientation == TriangleOrientation.Up)

@@ -28,6 +28,18 @@ public class TriangleMapDefinition : ScriptableObject
     [SerializeField] private int calculatedCenterRow;
     [SerializeField] private float calculatedTriangleHeight;
 
+    [Header("Vertical Triangle Phase Mirror")]
+    public bool mirrorTrianglePhaseInTopHalf = true;
+
+    // -1 means automatic halfway.
+    // For triangleRows = 58, this becomes 29.
+    public int manualMirrorStartRow = -1;
+
+    [Header("Calculated Mirror Info")]
+    [SerializeField] private int calculatedMirrorStartRow;
+    [SerializeField] private int calculatedBottomHalfLastRow;
+    [SerializeField] private int calculatedTopHalfFirstRow;
+
     [Header("Stamps")]
     public List<TriangleMapStamp> stamps = new();
 
@@ -49,9 +61,44 @@ public class TriangleMapDefinition : ScriptableObject
 
     public float TriangleHeight => sideLength * Mathf.Sqrt(3f) * 0.5f;
 
+    public int MirrorStartRow
+    {
+        get
+        {
+            if (manualMirrorStartRow >= 0)
+                return manualMirrorStartRow;
+
+            return triangleRows / 2;
+        }
+    }
+
+    public int BottomHalfLastRow => MirrorStartRow - 1;
+    public int TopHalfFirstRow => MirrorStartRow;
+
+    public bool IsMirroredHalfRow(int row)
+    {
+        return mirrorTrianglePhaseInTopHalf && row >= MirrorStartRow;
+    }
+
+    public int GetPhaseRow(int row)
+    {
+        if (!mirrorTrianglePhaseInTopHalf)
+            return row;
+
+        if (row < MirrorStartRow)
+            return row;
+
+        return triangleRows - 1 - row;
+    }
+
     public bool IsOffsetRow(int row)
     {
-        return offsetEveryOtherRow && row % 2 == 1;
+        if (!offsetEveryOtherRow)
+            return false;
+
+        int phaseRow = GetPhaseRow(row);
+
+        return Mathf.Abs(phaseRow % 2) == 1;
     }
 
     public int GetProfileColumn(Vector2Int coord)
@@ -59,9 +106,6 @@ public class TriangleMapDefinition : ScriptableObject
         if (!compensateOffsetRowsInProfiles)
             return coord.x;
 
-        // Odd rows are visually shifted right.
-        // Treat them as if their logical x is one column to the right.
-        // This allows active cells to start one physical column earlier.
         if (IsOffsetRow(coord.y))
             return coord.x + 1;
 
@@ -107,9 +151,6 @@ public class TriangleMapDefinition : ScriptableObject
         if (triangleRows < 1)
             triangleRows = 1;
 
-        if (triangleRows % 2 == 0)
-            triangleRows += 1;
-
         if (columnPadding < 0)
             columnPadding = 0;
 
@@ -122,5 +163,17 @@ public class TriangleMapDefinition : ScriptableObject
         calculatedCenterColumn = CenterColumn;
         calculatedCenterRow = CenterRow;
         calculatedTriangleHeight = TriangleHeight;
+
+        calculatedMirrorStartRow = MirrorStartRow;
+        calculatedBottomHalfLastRow = BottomHalfLastRow;
+        calculatedTopHalfFirstRow = TopHalfFirstRow;
+
+        if (mirrorTrianglePhaseInTopHalf && triangleRows % 2 != 0)
+        {
+            Debug.LogWarning(
+                $"{name}: mirrorTrianglePhaseInTopHalf works best with an even triangleRows value. " +
+                $"Current triangleRows is {triangleRows}."
+            );
+        }
     }
 }

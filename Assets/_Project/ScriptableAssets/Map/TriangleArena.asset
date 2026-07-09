@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: TriangleArena
   m_EditorClassIdentifier: Assembly-CSharp::TriangleMapDefinition
   playableColumns: 49
-  triangleRows: 57
+  triangleRows: 58
   columnPadding: 4
-  sideLength: 0.1
+  sideLength: 0.2
   offsetEveryOtherRow: 1
   firstColumnIsUp: 1
   enforceOddStampWidths: 1
@@ -24,8 +24,13 @@ MonoBehaviour:
   calculatedGeneratedMaxColumn: 52
   calculatedGeneratedColumnCount: 57
   calculatedCenterColumn: 24
-  calculatedCenterRow: 28
-  calculatedTriangleHeight: 0.08660254
+  calculatedCenterRow: 29
+  calculatedTriangleHeight: 0.17320508
+  mirrorTrianglePhaseInTopHalf: 1
+  manualMirrorStartRow: -1
+  calculatedMirrorStartRow: 29
+  calculatedBottomHalfLastRow: 28
+  calculatedTopHalfFirstRow: 29
   stamps:
   - enabled: 1
     name: Main Body
@@ -40,9 +45,9 @@ MonoBehaviour:
       width: 31
     - row: 9
       width: 49
-    - row: 47
+    - row: 48
       width: 49
-    - row: 56
+    - row: 57
       width: 31
   - enabled: 1
     name: White Start
@@ -74,70 +79,18 @@ MonoBehaviour:
     horizontalMirrorRegionOverride: 0
     centerColumn: 24
     profileKeys:
-    - row: 47
-      width: 31
     - row: 48
-      width: 33
+      width: 31
     - row: 50
-      width: 37
-    - row: 51
-      width: 39
+      width: 35
     - row: 52
       width: 39
-    - row: 54
+    - row: 53
+      width: 39
+    - row: 55
       width: 35
-    - row: 56
+    - row: 57
       width: 31
-  - enabled: 1
-    name: Left  Objective
-    mode: 2
-    region: 4
-    mirrorMode: 0
-    verticalMirrorRegionOverride: 0
-    horizontalMirrorRegionOverride: 0
-    centerColumn: 3
-    profileKeys:
-    - row: 21
-      width: 2
-    - row: 22
-      width: 4
-    - row: 24
-      width: 8
-    - row: 26
-      width: 11
-    - row: 29
-      width: 11
-    - row: 30
-      width: 10
-    - row: 32
-      width: 6
-    - row: 34
-      width: 2
-  - enabled: 1
-    name: Right  Objective
-    mode: 2
-    region: 5
-    mirrorMode: 0
-    verticalMirrorRegionOverride: 0
-    horizontalMirrorRegionOverride: 0
-    centerColumn: 45
-    profileKeys:
-    - row: 21
-      width: 2
-    - row: 22
-      width: 4
-    - row: 24
-      width: 8
-    - row: 26
-      width: 11
-    - row: 29
-      width: 11
-    - row: 30
-      width: 10
-    - row: 32
-      width: 6
-    - row: 34
-      width: 2
   - enabled: 1
     name: Center Objective
     mode: 2
@@ -147,20 +100,72 @@ MonoBehaviour:
     horizontalMirrorRegionOverride: 0
     centerColumn: 24
     profileKeys:
-    - row: 23
-      width: 3
     - row: 24
-      width: 5
+      width: 3
     - row: 26
-      width: 9
-    - row: 27
-      width: 11
+      width: 7
     - row: 28
       width: 11
-    - row: 30
+    - row: 29
+      width: 11
+    - row: 31
       width: 7
-    - row: 32
+    - row: 33
       width: 3
+  - enabled: 1
+    name: Left  Objective
+    mode: 2
+    region: 4
+    mirrorMode: 0
+    verticalMirrorRegionOverride: 0
+    horizontalMirrorRegionOverride: 0
+    centerColumn: 2
+    profileKeys:
+    - row: 22
+      width: 2
+    - row: 24
+      width: 6
+    - row: 26
+      width: 10
+    - row: 28
+      width: 14
+    - row: 29
+      width: 14
+    - row: 30
+      width: 12
+    - row: 32
+      width: 8
+    - row: 34
+      width: 4
+    - row: 35
+      width: 2
+  - enabled: 1
+    name: Right  Objective
+    mode: 2
+    region: 5
+    mirrorMode: 0
+    verticalMirrorRegionOverride: 0
+    horizontalMirrorRegionOverride: 0
+    centerColumn: 46
+    profileKeys:
+    - row: 22
+      width: 2
+    - row: 24
+      width: 6
+    - row: 26
+      width: 10
+    - row: 28
+      width: 14
+    - row: 29
+      width: 14
+    - row: 30
+      width: 12
+    - row: 32
+      width: 8
+    - row: 34
+      width: 4
+    - row: 35
+      width: 2
   neutralColor: {r: 0, g: 0, b: 0, a: 1}
   whiteStartColor: {r: 0.8, g: 0.8, b: 0.8, a: 1}
   blackStartColor: {r: 1, g: 0.35, b: 0.35, a: 1}

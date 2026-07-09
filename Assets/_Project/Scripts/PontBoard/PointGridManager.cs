@@ -178,19 +178,19 @@ public class PointGridManager : MonoBehaviour
         if (centerPoint == null || unitDef == null)
             return pointsInsideFootprint;
 
-        Vector3[] unitPolygon = GetHexPolygon(
-            centerPoint.WorldPosition, 
-            unitDef.footprintRadius, 
-            unitDef.footprintRotationDegrees
-        );
+        // Vector3[] unitPolygon = GetHexPolygon(
+        //     centerPoint.WorldPosition, 
+        //     unitDef.footprintRadius, 
+        //     unitDef.footprintRotationDegrees
+        // );
 
         foreach (GridPoint point in GetAllPoints())
         {
             if (!point.IsActive)
                 continue;
 
-            if (IsPointInsidePolygon(point.WorldPosition, unitPolygon))
-                pointsInsideFootprint.Add(point);
+            // if (IsPointInsidePolygon(point.WorldPosition, unitPolygon))
+            //     pointsInsideFootprint.Add(point);
         }
 
         return pointsInsideFootprint;
