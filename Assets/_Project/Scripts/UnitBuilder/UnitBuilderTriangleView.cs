@@ -42,7 +42,7 @@ public class UnitBuilderTriangleView : MonoBehaviour
         if (builder != null)
             builder.SetHoveredTriangle(coord);
 
-        if (builder != null && Input.GetMouseButton(0))
+        if (builder != null && builder.IsPaintHeld())
             builder.PaintTriangle(coord);
     }
 

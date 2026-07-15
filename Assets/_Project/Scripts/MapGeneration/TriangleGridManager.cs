@@ -259,4 +259,46 @@ cell.center.RegisterUnitAnchorType(UnitAnchorType.TriangleCenter);
         foreach (TriangleNode node in nodes.Values)
             node.ClearVisualStates();
     }
+
+    public TriangleNode FindClosestAnchorNode(Vector3 worldPosition, UnitAnchorType anchorType, float maxDistance)
+    {
+        TriangleNode bestNode = null;
+        float bestDistanceSqr = maxDistance * maxDistance;
+
+        foreach (TriangleNode node in AllNodes)
+        {
+            if (node == null)
+                continue;
+
+            if (!node.SupportsUnitAnchorType(anchorType))
+                continue;
+
+            if (!NodeHasActiveOwner(node))
+                continue;
+
+            float distanceSqr = (node.worldPosition - worldPosition).sqrMagnitude;
+
+            if (distanceSqr < bestDistanceSqr)
+            {
+                bestDistanceSqr = distanceSqr;
+                bestNode = node;
+            }
+        }
+
+        return bestNode;
+    }
+
+    bool NodeHasActiveOwner(TriangleNode node)
+    {
+        if (node == null)
+            return false;
+
+        foreach (TriangleCell owner in node.ownerTriangles)
+        {
+            if (owner != null && owner.isActive)
+                return true;
+        }
+
+        return false;
+    }
 }

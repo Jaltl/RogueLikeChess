@@ -176,4 +176,15 @@ public class TriangleMapDefinition : ScriptableObject
             );
         }
     }
+
+    public Vector2Int GetCoordFromProfileColumn(int profileColumn, int row)
+    {
+        if (!compensateOffsetRowsInProfiles)
+            return new Vector2Int(profileColumn, row);
+
+        if (IsOffsetRow(row))
+            return new Vector2Int(profileColumn - 1, row);
+
+        return new Vector2Int(profileColumn, row);
+    }
 }

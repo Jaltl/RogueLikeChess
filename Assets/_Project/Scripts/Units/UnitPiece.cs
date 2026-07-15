@@ -1,39 +1,74 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public enum PlayerSide
-{
-    White,
-    Black
-}
-
 public class UnitPiece : MonoBehaviour
 {
-    public UnitDefinition definition;
-    public PlayerSide owner;
+    [Header("Runtime Data")]
+    [SerializeField] private UnitDefinition definition;
+    [SerializeField] private PlayerSide owner;
 
-    public GridPoint anchorPoint { get; private set; }
-    public List<GridPoint> occupiedPoints { get; private set; } = new();
+    private TriangleNode anchorNode;
+    private TriangleCell anchorCell;
 
-    public void Init(UnitDefinition definition, PlayerSide owner, GridPoint anchorPoint)
+    private readonly List<TriangleCell> occupiedCells = new();
+    private readonly List<TriangleCell> supportCells = new();
+
+    public UnitDefinition Definition => definition;
+
+    public TriangleNode AnchorNode => anchorNode;
+    public TriangleCell AnchorCell => anchorCell;
+
+    public IReadOnlyList<TriangleCell> OccupiedCells => occupiedCells;
+    public IReadOnlyList<TriangleCell> SupportCells => supportCells;
+
+    public void Init(UnitDefinition definition, PlayerSide owner, UnitPlacementResult placement)
     {
         this.definition = definition;
         this.owner = owner;
-        this.anchorPoint = anchorPoint;
+
+        anchorNode = placement.anchorNode;
+        anchorCell = placement.anchorCell;
+
+        occupiedCells.Clear();
+        supportCells.Clear();
+
+        occupiedCells.AddRange(placement.baseCells);
+        supportCells.AddRange(placement.supportCells);
+
+        if (anchorNode != null)
+            transform.position = anchorNode.worldPosition;
     }
 
-    public void SetAnchorPoint(GridPoint point)
+    public void SetAnchor(TriangleNode node, TriangleCell cell)
     {
-        anchorPoint = point;
+        anchorNode = node;
+        anchorCell = cell;
+
+        if (anchorNode != null)
+            transform.position = anchorNode.worldPosition;
     }
 
-    public void SetOccupiedPoints(List<GridPoint> points)
+    public void SetOccupiedCells(List<TriangleCell> cells)
     {
-        occupiedPoints = points;
+        occupiedCells.Clear();
+
+        if (cells != null)
+            occupiedCells.AddRange(cells);
     }
 
-    public void ClearOccupiedPoints()
+    public void SetSupportCells(List<TriangleCell> cells)
     {
-        occupiedPoints.Clear();
+        supportCells.Clear();
+
+        if (cells != null)
+            supportCells.AddRange(cells);
+    }
+
+    public void ClearRuntimeCells()
+    {
+        anchorNode = null;
+        anchorCell = null;
+        occupiedCells.Clear();
+        supportCells.Clear();
     }
 }

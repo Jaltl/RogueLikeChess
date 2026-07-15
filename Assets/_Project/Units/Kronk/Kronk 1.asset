@@ -10,108 +10,148 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e1a0430d09a8ad5419b0ed7d40fe2d45, type: 3}
-  m_Name: Kronk
+  m_Name: Kronk 1
   m_EditorClassIdentifier: Assembly-CSharp::UnitDefinition
-  unitName: 
-  icon: {fileID: 0}
-  unitPrefab: {fileID: 0}
-  Power: 217
-  Health: 136
-  Cost: 139
-  anchorType: 1
+  unitName: Kronk 2
+  unitIcon: {fileID: -8623084541202537176, guid: b0be9977abd608d4daafef7fb7fb2d2e, type: 3}
+  unitPrefab: {fileID: 6081224204154420981, guid: e0aa77a542cefe546b3680cadc6e93ef, type: 3}
+  health: 10
+  power: 1
+  cost: 1
+  anchorType: 0
   baseSize:
-  - x: -1
-    y: -1
-  - x: 0
-    y: -1
-  - x: 1
-    y: -1
-  - x: 2
-    y: -1
-  - x: 3
-    y: -1
-  - x: -3
-    y: 0
-  - x: -2
-    y: 0
-  - x: -1
-    y: 0
-  - x: 1
-    y: 0
-  - x: 2
-    y: 0
-  - x: 3
-    y: 0
-  - x: -2
-    y: 1
-  - x: -1
-    y: 1
-  - x: 0
-    y: 1
-  - x: 1
-    y: 1
-  - x: 2
-    y: 1
-  - x: 3
-    y: 1
-  - x: 4
-    y: 1
-  - x: -2
-    y: 2
-  - x: -1
-    y: 2
-  - x: 0
-    y: 2
-  - x: 1
-    y: 2
-  - x: 2
-    y: 2
-  supportRange:
-  - x: -1
-    y: -3
-  - x: 0
-    y: -3
-  - x: 1
-    y: -3
-  - x: 2
-    y: -3
-  - x: 3
-    y: -3
-  - x: -2
-    y: -2
-  - x: -1
-    y: -2
-  - x: 0
-    y: -2
-  - x: 1
-    y: -2
-  - x: 2
-    y: -2
-  - x: -3
-    y: 1
-  - x: 5
-    y: 1
-  - x: -5
-    y: 2
   - x: -4
-    y: 2
+    y: -1
   - x: -3
+    y: -1
+  - x: -2
+    y: -1
+  - x: -1
+    y: -1
+  - x: 0
+    y: -1
+  - x: 1
+    y: -1
+  - x: 2
+    y: -1
+  - x: 3
+    y: -1
+  - x: 4
+    y: -1
+  - x: -4
+    y: 0
+  - x: -3
+    y: 0
+  - x: -2
+    y: 0
+  - x: -1
+    y: 0
+  - x: 0
+    y: 0
+  - x: 1
+    y: 0
+  - x: 2
+    y: 0
+  - x: 3
+    y: 0
+  - x: 4
+    y: 0
+  - x: -3
+    y: 1
+  - x: -2
+    y: 1
+  - x: -1
+    y: 1
+  - x: 0
+    y: 1
+  - x: 1
+    y: 1
+  - x: 2
+    y: 1
+  - x: 3
+    y: 1
+  - x: -2
+    y: 2
+  - x: -1
+    y: 2
+  - x: 0
+    y: 2
+  - x: 1
+    y: 2
+  - x: 2
+    y: 2
+  - x: -1
+    y: 3
+  - x: 0
+    y: 3
+  - x: 1
+    y: 3
+  supportRange: []
+  baseSizeDown:
+  - x: -4
+    y: 0
+  - x: -3
+    y: 0
+  - x: -2
+    y: 0
+  - x: -1
+    y: 0
+  - x: 0
+    y: 0
+  - x: 1
+    y: 0
+  - x: 2
+    y: 0
+  - x: 3
+    y: 0
+  - x: 4
+    y: 0
+  - x: -4
+    y: 1
+  - x: -3
+    y: 1
+  - x: -2
+    y: 1
+  - x: -1
+    y: 1
+  - x: 0
+    y: 1
+  - x: 1
+    y: 1
+  - x: 2
+    y: 1
+  - x: 3
+    y: 1
+  - x: 4
+    y: 1
+  - x: -3
+    y: 2
+  - x: -2
+    y: 2
+  - x: -1
+    y: 2
+  - x: 0
+    y: 2
+  - x: 1
+    y: 2
+  - x: 2
     y: 2
   - x: 3
     y: 2
-  - x: 4
-    y: 2
-  - x: 5
-    y: 2
-  - x: -4
-    y: 3
-  - x: -3
-    y: 3
   - x: -2
     y: 3
-  - x: 4
+  - x: -1
     y: 3
-  - x: 5
+  - x: 0
     y: 3
-  - x: 6
+  - x: 1
     y: 3
+  - x: 2
+    y: 3
+  - x: -1
+    y: 4
+  - x: 0
+    y: 4
+  - x: 1
+    y: 4
+  supportRangeDown: []

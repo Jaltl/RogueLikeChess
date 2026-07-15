@@ -1,11 +1,11 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 public enum UnitAnchorType
 {
     TriangleCenter,
     Corner,
-    SideMidpoint
+    SideMidpoint,
+    triangleFacing
 }
 
 public enum UnitFootprintArea
