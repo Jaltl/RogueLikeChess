@@ -1,46 +1,85 @@
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 
 public class UnitCardUI : MonoBehaviour
 {
-    [SerializeField] private UnitDefinition unit;
-    [SerializeField] private Image icon;
-    [SerializeField] private TMP_Text nameText;
-    [SerializeField] private TMP_Text costText;
+    [Header("References")]
+    [SerializeField] private TrianglePlacementController placementController;
+    [SerializeField] private UnitDefinition unitDefinition;
+
+    [Header("UI")]
     [SerializeField] private Button button;
-    [SerializeField] private PlacementController placementController;
+    [SerializeField] private Image iconImage;
+    [SerializeField] private TMP_Text nameText;
+    [SerializeField] private TMP_Text powerText;
+    [SerializeField] private TMP_Text costText;
+    [SerializeField] private TMP_Text anchorText;
+
+    private void Awake()
+    {
+        if (button == null)
+            button = GetComponent<Button>();
+
+        if (button != null)
+            button.onClick.AddListener(SelectUnit);
+    }
 
     private void Start()
     {
-        if (unit == null)
-        {
-            Debug.LogError($"{name} has no UnitDefinition assigned");
-            return;
-        }
-
-        if (placementController == null)
-        {
-            Debug.LogError($"{name} has no PlacementController assigned");
-            return;
-        }
-
-        if (button == null)
-        {
-            Debug.LogError($"{name} has no Button assigned");
-            return;
-        }
-
-        icon.sprite = unit.icon;
-        nameText.text = unit.unitName;
-        costText.text = unit.Cost.ToString();
-
-        button.onClick.AddListener(OnClicked);
+        Refresh();
     }
 
-    private void OnClicked()
+    public void Initialize(UnitDefinition definition, TrianglePlacementController controller)
     {
-        Debug.Log($"Clicked card: {unit.unitName}");
-        placementController.SelectUnit(unit);
+        unitDefinition = definition;
+        placementController = controller;
+
+        Refresh();
+    }
+
+    public void SelectUnit()
+    {
+        if (placementController == null || unitDefinition == null)
+            return;
+
+        placementController.SelectUnit(unitDefinition);
+    }
+
+    void Refresh()
+    {
+        if (unitDefinition == null)
+            return;
+
+        if (iconImage != null)
+            iconImage.sprite = unitDefinition.unitIcon;
+
+        if (nameText != null)
+            nameText.text = unitDefinition.unitName;
+
+        if (powerText != null)
+            powerText.text = unitDefinition.power.ToString();
+
+        if (costText != null)
+            costText.text = unitDefinition.cost.ToString();
+
+        if (anchorText != null)
+            anchorText.text = GetAnchorLabel(unitDefinition.anchorType);
+    }
+
+    string GetAnchorLabel(UnitAnchorType anchorType)
+    {
+        switch (anchorType)
+        {
+            case UnitAnchorType.Corner:
+                return "Corner";
+
+            case UnitAnchorType.SideMidpoint:
+                return "Side";
+
+            case UnitAnchorType.TriangleCenter:
+            default:
+                return "Center";
+        }
     }
 }

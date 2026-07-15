@@ -56,24 +56,31 @@ public enum MapMirrorMode
     Both
 }
 
+public enum PlayerSide
+{
+    None,
+    White,
+    Black
+}
+
 //Map generation
-public class MapTriangle
-{
-    public Vector2Int coord;
-    public TriangleDirection direction;
-    public MapRegion region;
-    public bool isActive;
-    public bool isBlockedTerrain;
+// public class MapTriangle
+// {
+//     public Vector2Int coord;
+//     public TriangleDirection direction;
+//     public MapRegion region;
+//     public bool isActive;
+//     public bool isBlockedTerrain;
 
-    public Vector2Int[] cornerCoords;
-    public List<GridPoint> points = new();
-}
+//     public Vector2Int[] cornerCoords;
+//     public List<GridPoint> points = new();
+// }
 
-//Map line VFX
-public class VisualEdge
-{
-    public GridPoint a;
-    public GridPoint b;
-    public List<MapTriangle> ownerTriangles = new();
-    public LineRenderer line;
-}
+// //Map line VFX
+// public class VisualEdge
+// {
+//     public GridPoint a;
+//     public GridPoint b;
+//     public List<MapTriangle> ownerTriangles = new();
+//     public LineRenderer line;
+//}

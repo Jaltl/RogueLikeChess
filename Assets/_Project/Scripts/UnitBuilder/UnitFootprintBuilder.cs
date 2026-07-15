@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.UI;
 
 #if UNITY_EDITOR
 using UnityEditor;
@@ -54,10 +56,71 @@ public class UnitFootprintBuilder : MonoBehaviour
     [SerializeField] private UnitBuilderPaintMode paintMode = UnitBuilderPaintMode.Select;
     [SerializeField] private UnitAnchorType anchorType = UnitAnchorType.TriangleCenter;
 
+    [Header("Mirror Painting")]
+    [SerializeField] private bool mirrorPaintingEnabled = false;
+
+    [Header("Input Actions")]
+    [SerializeField] private bool enableActionsManually = true;
+
+    [SerializeField] private InputActionReference baseSizeAction;
+    [SerializeField] private InputActionReference supportRangeAction;
+    [SerializeField] private InputActionReference finishedAction;
+
+    [SerializeField] private InputActionReference selectAction;
+    [SerializeField] private InputActionReference deselectAction;
+    [SerializeField] private InputActionReference fillAction;
+    [SerializeField] private InputActionReference mirrorAction;
+    [SerializeField] private InputActionReference undoAction;
+    [SerializeField] private InputActionReference clearAction;
+
+    [SerializeField] private InputActionReference anchorCenterAction;
+    [SerializeField] private InputActionReference anchorCornerAction;
+    [SerializeField] private InputActionReference anchorSideMidpointAction;
+    [SerializeField] private InputActionReference triangleFacingAction;
+
+    [Header("Painting Input")]
+    [SerializeField] private InputActionReference paintAction;
+
+    [Header("Center Marker")]
+    [SerializeField] private bool showCenterMarker = true;
+    [SerializeField] private float centerMarkerRadius = 0.06f;
+    [SerializeField] private int centerMarkerSegments = 24;
+    [SerializeField] private Color centerMarkerColor = Color.yellow;
+    [SerializeField] private Material centerMarkerMaterial;
+
+    private GameObject centerMarkerObject;
+
+    [Header("UI Button Visuals")]
+    [SerializeField] private Color buttonInactiveColor = new Color(0.55f, 0.55f, 0.55f, 1f);
+    [SerializeField] private Color buttonActiveColor = new Color(1f, 0.85f, 0.25f, 1f);
+    [SerializeField] private Color mirrorActiveColor = new Color(0.25f, 0.9f, 1f, 1f);
+    [SerializeField] private Color upOrientationColor = Color.darkGray;
+    [SerializeField] private Color downOrientationColor = Color.lightGray;
+
+    [SerializeField] private Button baseSizeButton;
+    [SerializeField] private Button supportRangeButton;
+
+    [SerializeField] private Button selectButton;
+    [SerializeField] private Button deselectButton;
+    [SerializeField] private Button mirrorButton;
+
+    [SerializeField] private Button anchorCenterButton;
+    [SerializeField] private Button anchorCornerButton;
+    [SerializeField] private Button anchorSideMidpointButton;
+    [SerializeField] private Button triangleFacingButton;
+    [SerializeField] private TMPro.TMP_Text anchorOrientationButtonText;
+
+    [Header("Default Builder State")]
+    [SerializeField] private UnitAnchorType fallbackAnchorType = UnitAnchorType.TriangleCenter;
+    [SerializeField] private bool showCenterMarkerByDefault = true;
+
+    [SerializeField] private TriangleOrientation editedAnchorOrientation = TriangleOrientation.Up;
+
+    private readonly Stack<BuilderSnapshot> undoStack = new();
+
     private readonly Dictionary<Vector2Int, UnitBuilderTriangleView> views = new();
     private readonly HashSet<Vector2Int> baseSelection = new();
     private readonly HashSet<Vector2Int> supportSelection = new();
-    private readonly Stack<BuilderSnapshot> undoStack = new();
 
     private Vector2Int AnchorCoord => new Vector2Int(columns / 2, rows / 2);
 
@@ -78,11 +141,19 @@ public class UnitFootprintBuilder : MonoBehaviour
         }
     }
 
+    private void OnEnable()
+    {
+        RegisterInputActions(true);
+    }
+
+    private void OnDisable()
+    {
+        RegisterInputActions(false);
+    }
     private void Start()
     {
-        BuildGrid();
+        ApplyDefaultToolState();
         LoadFromUnitDefinition();
-        RefreshAllColors();
     }
 
     [ContextMenu("Rebuild Builder Grid")]
@@ -105,7 +176,9 @@ public class UnitFootprintBuilder : MonoBehaviour
             }
         }
 
+        CreateOrRefreshCenterMarker();
         RefreshAllColors();
+        RefreshUiState();
     }
 
     void CreateTriangleView(Vector2Int coord, Vector3 anchorWorldOffset)
@@ -178,28 +251,28 @@ public class UnitFootprintBuilder : MonoBehaviour
 
         for (int i = gridRoot.childCount - 1; i >= 0; i--)
         {
-            GameObject child = gridRoot.GetChild(i).gameObject;
+            Transform child = gridRoot.GetChild(i);
+
+            if (centerMarkerObject != null && child.gameObject == centerMarkerObject)
+                continue;
 
             if (Application.isPlaying)
-                Destroy(child);
+                Destroy(child.gameObject);
             else
-                DestroyImmediate(child);
+                DestroyImmediate(child.gameObject);
         }
     }
 
     TriangleOrientation GetOrientation(Vector2Int coord)
     {
-        bool useFirstColumnIsUp = geometrySource != null
-            ? geometrySource.firstColumnIsUp
-            : firstColumnIsUp;
+        TriangleOrientation rawOrientation = GetRawOrientation(coord);
 
-        bool evenColumn = Mathf.Abs(coord.x % 2) == 0;
+        if (!ShouldFlipBuilderOrientation())
+            return rawOrientation;
 
-        bool isUp = useFirstColumnIsUp
-            ? evenColumn
-            : !evenColumn;
-
-        return isUp ? TriangleOrientation.Up : TriangleOrientation.Down;
+        return rawOrientation == TriangleOrientation.Up
+            ? TriangleOrientation.Down
+            : TriangleOrientation.Up;
     }
 
     bool IsOffsetRow(int row)
@@ -264,36 +337,70 @@ public class UnitFootprintBuilder : MonoBehaviour
 
     public void PaintTriangle(Vector2Int coord)
     {
-        if (!views.ContainsKey(coord))
+        List<Vector2Int> paintCoords = GetPaintCoords(coord);
+
+        if (!WouldPaintChangeAnything(paintCoords))
             return;
 
-        bool isEditingBase = currentArea == UnitFootprintArea.BaseSize;
+        PushUndo();
+
+        foreach (Vector2Int paintCoord in paintCoords)
+            ApplyPaintToTriangle(paintCoord);
+
+        foreach (Vector2Int paintCoord in paintCoords)
+            RefreshTriangleColor(paintCoord);
+    }
+
+    bool WouldPaintChangeAnything(List<Vector2Int> coords)
+    {
+        foreach (Vector2Int coord in coords)
+        {
+            if (WouldPaintChangeTriangle(coord))
+                return true;
+        }
+
+        return false;
+    }
+
+    bool WouldPaintChangeTriangle(Vector2Int coord)
+    {
+        if (!views.ContainsKey(coord))
+            return false;
+
         bool isEditingSupport = currentArea == UnitFootprintArea.SupportRange;
 
         if (isEditingSupport && paintMode == UnitBuilderPaintMode.Select)
         {
-            // Support range is not allowed inside the base.
             if (baseSelection.Contains(coord))
-                return;
+                return false;
         }
 
         HashSet<Vector2Int> target = GetCurrentSelection();
 
         bool alreadySelected = target.Contains(coord);
 
-        if (paintMode == UnitBuilderPaintMode.Select && alreadySelected)
+        if (paintMode == UnitBuilderPaintMode.Select)
+            return !alreadySelected;
+
+        if (paintMode == UnitBuilderPaintMode.Deselect)
+            return alreadySelected;
+
+        return false;
+    }
+
+    void ApplyPaintToTriangle(Vector2Int coord)
+    {
+        if (!WouldPaintChangeTriangle(coord))
             return;
 
-        if (paintMode == UnitBuilderPaintMode.Deselect && !alreadySelected)
-            return;
+        bool isEditingBase = currentArea == UnitFootprintArea.BaseSize;
 
-        PushUndo();
+        HashSet<Vector2Int> target = GetCurrentSelection();
 
         if (paintMode == UnitBuilderPaintMode.Select)
         {
             target.Add(coord);
 
-            // Base always wins over support.
             if (isEditingBase)
                 supportSelection.Remove(coord);
         }
@@ -301,8 +408,6 @@ public class UnitFootprintBuilder : MonoBehaviour
         {
             target.Remove(coord);
         }
-
-        RefreshTriangleColor(coord);
     }
     HashSet<Vector2Int> GetCurrentSelection()
     {
@@ -378,21 +483,62 @@ public class UnitFootprintBuilder : MonoBehaviour
             {
                 Vector2Int coord = new Vector2Int(col, row);
 
-                if (!views.ContainsKey(coord))
-                    continue;
-
-                if (isEditingSupport && baseSelection.Contains(coord))
-                    continue;
-
-                target.Add(coord);
-
-                if (isEditingBase)
-                    supportSelection.Remove(coord);
+                TryAddToCurrentArea(coord, isEditingBase, isEditingSupport);
             }
         }
 
+        if (mirrorPaintingEnabled)
+            MirrorCurrentAreaIntoItself();
+
         RefreshAllColors();
     }
+
+    void TryAddToCurrentArea(Vector2Int coord, bool isEditingBase, bool isEditingSupport)
+{
+    if (!views.ContainsKey(coord))
+        return;
+
+    if (isEditingSupport && baseSelection.Contains(coord))
+        return;
+
+    HashSet<Vector2Int> target = GetCurrentSelection();
+
+    target.Add(coord);
+
+    if (isEditingBase)
+        supportSelection.Remove(coord);
+}
+
+public void MirrorCurrentAreaIntoItself()
+{
+    HashSet<Vector2Int> target = GetCurrentSelection();
+
+    if (target.Count == 0)
+        return;
+
+    bool isEditingSupport = currentArea == UnitFootprintArea.SupportRange;
+    bool isEditingBase = currentArea == UnitFootprintArea.BaseSize;
+
+    List<Vector2Int> original = new(target);
+
+    foreach (Vector2Int coord in original)
+    {
+        Vector2Int mirrored = GetMirroredCoord(coord);
+
+        if (!views.ContainsKey(mirrored))
+            continue;
+
+        if (isEditingSupport && baseSelection.Contains(mirrored))
+            continue;
+
+        target.Add(mirrored);
+
+        if (isEditingBase)
+            supportSelection.Remove(mirrored);
+    }
+
+    RefreshAllColors();
+}
 
     public void SaveToUnitDefinition()
     {
@@ -408,11 +554,13 @@ public class UnitFootprintBuilder : MonoBehaviour
 
         unitDefinition.SetFootprint(
             UnitFootprintArea.BaseSize,
+            editedAnchorOrientation,
             ConvertSelectionToOffsets(baseSelection)
         );
 
         unitDefinition.SetFootprint(
             UnitFootprintArea.SupportRange,
+            editedAnchorOrientation,
             ConvertSelectionToOffsets(supportSelection)
         );
 
@@ -422,24 +570,60 @@ public class UnitFootprintBuilder : MonoBehaviour
 #endif
 
         Debug.Log(
-            $"Saved unit footprint to {unitDefinition.name}. " +
-            $"Base cells: {unitDefinition.baseSize.Count}, " +
-            $"Support cells: {unitDefinition.supportRange.Count}, " +
+            $"Saved {editedAnchorOrientation} unit footprint to {unitDefinition.name}. " +
+            $"Base cells: {GetCurrentSavedBaseCount()}, " +
+            $"Support cells: {GetCurrentSavedSupportCount()}, " +
             $"Anchor: {unitDefinition.anchorType}"
         );
+    }
+
+    int GetCurrentSavedBaseCount()
+    {
+        if (unitDefinition == null)
+            return 0;
+
+        return unitDefinition.GetEditableFootprint(
+            UnitFootprintArea.BaseSize,
+            editedAnchorOrientation
+        ).Count;
+    }
+
+    int GetCurrentSavedSupportCount()
+    {
+        if (unitDefinition == null)
+            return 0;
+
+        return unitDefinition.GetEditableFootprint(
+            UnitFootprintArea.SupportRange,
+            editedAnchorOrientation
+        ).Count;
     }
 
     List<TriangleFootprintCell> ConvertSelectionToOffsets(HashSet<Vector2Int> selection)
     {
         List<TriangleFootprintCell> result = new();
 
+        int anchorProfileX = GetBuilderProfileColumn(AnchorCoord);
+
         foreach (Vector2Int coord in selection)
         {
-            Vector2Int offset = coord - AnchorCoord;
-            result.Add(new TriangleFootprintCell(offset.x, offset.y));
+            int profileX = GetBuilderProfileColumn(coord);
+
+            int offsetX = profileX - anchorProfileX;
+            int offsetY = coord.y - AnchorCoord.y;
+
+            result.Add(new TriangleFootprintCell(offsetX, offsetY));
         }
 
         return result;
+    }
+
+    int GetBuilderProfileColumn(Vector2Int coord)
+    {
+        if (IsOffsetRow(coord.y))
+            return coord.x + 1;
+
+        return coord.x;
     }
 
     public void LoadFromUnitDefinition()
@@ -448,39 +632,57 @@ public class UnitFootprintBuilder : MonoBehaviour
         supportSelection.Clear();
         undoStack.Clear();
 
-        if (unitDefinition == null)
+        if (unitDefinition != null)
+            anchorType = unitDefinition.anchorType;
+        else
+            anchorType = fallbackAnchorType;
+
+        showCenterMarker = showCenterMarkerByDefault;
+
+        BuildGrid();
+
+        if (unitDefinition != null)
         {
-            RefreshAllColors();
-            return;
+            LoadFootprintIntoSelection(unitDefinition.GetEditableFootprint(UnitFootprintArea.BaseSize, editedAnchorOrientation), baseSelection);
+
+            LoadFootprintIntoSelection(unitDefinition.GetEditableFootprint(UnitFootprintArea.SupportRange, editedAnchorOrientation), supportSelection);
         }
-
-        anchorType = unitDefinition.anchorType;
-
-        LoadFootprintIntoSelection(unitDefinition.baseSize, baseSelection);
-        LoadFootprintIntoSelection(unitDefinition.supportRange, supportSelection);
 
         supportSelection.RemoveWhere(coord => baseSelection.Contains(coord));
 
+        CreateOrRefreshCenterMarker();
         RefreshAllColors();
+        RefreshUiState();
     }
 
-    void LoadFootprintIntoSelection(List<TriangleFootprintCell> footprint, HashSet<Vector2Int> target)
+    void LoadFootprintIntoSelection(
+    List<TriangleFootprintCell> footprint,
+    HashSet<Vector2Int> target
+)
     {
         if (footprint == null)
             return;
 
+        int anchorProfileX = GetBuilderProfileColumn(AnchorCoord);
+
         foreach (TriangleFootprintCell cell in footprint)
         {
-            Vector2Int coord = AnchorCoord + cell.Coord;
+            int row = AnchorCoord.y + cell.y;
+            int profileX = anchorProfileX + cell.x;
 
-            if (coord.x < 0 || coord.x >= columns)
-                continue;
+            Vector2Int coord = GetBuilderCoordFromProfileColumn(profileX, row);
 
-            if (coord.y < 0 || coord.y >= rows)
-                continue;
-
-            target.Add(coord);
+            if (views.ContainsKey(coord))
+                target.Add(coord);
         }
+    }
+
+    Vector2Int GetBuilderCoordFromProfileColumn(int profileColumn, int row)
+    {
+        if (IsOffsetRow(row))
+            return new Vector2Int(profileColumn - 1, row);
+
+        return new Vector2Int(profileColumn, row);
     }
 
     void RefreshAllColors()
@@ -496,7 +698,6 @@ public class UnitFootprintBuilder : MonoBehaviour
 
         bool isBase = baseSelection.Contains(coord);
         bool isSupport = supportSelection.Contains(coord);
-        bool isAnchor = coord == AnchorCoord;
         bool isHovered = hoveredCoord.HasValue && hoveredCoord.Value == coord;
 
         TriangleOrientation orientation = GetOrientation(coord);
@@ -511,10 +712,6 @@ public class UnitFootprintBuilder : MonoBehaviour
         else if (isSupport)
         {
             fillColor = isUp ? supportUpColor : supportDownColor;
-        }
-        else if (isAnchor)
-        {
-            fillColor = anchorPreviewColor;
         }
         else
         {
@@ -532,71 +729,470 @@ public class UnitFootprintBuilder : MonoBehaviour
     public void SetTargetBaseSize()
     {
         currentArea = UnitFootprintArea.BaseSize;
+        RefreshUiState();
     }
 
     public void SetTargetSupportRange()
     {
         currentArea = UnitFootprintArea.SupportRange;
+        RefreshUiState();
     }
 
     public void SetPaintSelect()
     {
         paintMode = UnitBuilderPaintMode.Select;
+        RefreshUiState();
     }
 
     public void SetPaintDeselect()
     {
         paintMode = UnitBuilderPaintMode.Deselect;
+        RefreshUiState();
     }
 
     public void SetAnchorTriangleCenter()
     {
-        anchorType = UnitAnchorType.TriangleCenter;
-        BuildGrid();
+        SetAnchorType(UnitAnchorType.TriangleCenter);
     }
 
     public void SetAnchorCorner()
     {
-        anchorType = UnitAnchorType.Corner;
+        SetAnchorType(UnitAnchorType.Corner);
         BuildGrid();
+        RefreshUiState();
+    }
+
+    public void ToggleTriangleFacing()
+    {
+        editedAnchorOrientation = editedAnchorOrientation == TriangleOrientation.Up
+            ? TriangleOrientation.Down
+            : TriangleOrientation.Up;
+
+        LoadFromUnitDefinition();
     }
 
     public void SetAnchorSideMidpoint()
     {
-        anchorType = UnitAnchorType.SideMidpoint;
+        SetAnchorType(UnitAnchorType.SideMidpoint);
+    }
+
+    private void SetAnchorType(UnitAnchorType newAnchorType)
+    {
+        if (anchorType == newAnchorType)
+        {
+            ToggleCenterMarker();
+            return;
+        }
+
+        anchorType = newAnchorType;
+        showCenterMarker = true;
+
         BuildGrid();
+        CreateOrRefreshCenterMarker();
+        RefreshUiState();
+    }
+
+    public void ToggleCenterMarker()
+    {
+        showCenterMarker = !showCenterMarker;
+
+        CreateOrRefreshCenterMarker();
+        RefreshUiState();
     }
 
     public void SetUnitDefinition(UnitDefinition definition)
     {
         unitDefinition = definition;
+
+        ApplyDefaultToolState();
         LoadFromUnitDefinition();
-        BuildGrid();
     }
 
     public void SetHoveredTriangle(Vector2Int coord)
+    {
+        if (hoveredCoord.HasValue && hoveredCoord.Value == coord)
+            return;
+
+        Vector2Int? oldHover = hoveredCoord;
+        hoveredCoord = coord;
+
+        if (oldHover.HasValue)
+            RefreshTriangleColor(oldHover.Value);
+
+        RefreshTriangleColor(coord);
+    }
+
+    public void ClearHoveredTriangle(Vector2Int coord)
+    {
+        if (!hoveredCoord.HasValue)
+            return;
+
+        if (hoveredCoord.Value != coord)
+            return;
+
+        hoveredCoord = null;
+        RefreshTriangleColor(coord);
+    }
+
+    public void ClearCurrentArea()
+    {
+        HashSet<Vector2Int> target = GetCurrentSelection();
+
+        if (target.Count == 0)
+            return;
+
+        PushUndo();
+
+        target.Clear();
+
+        RefreshAllColors();
+    }
+
+    public void ToggleMirrorPainting()
+    {
+        mirrorPaintingEnabled = !mirrorPaintingEnabled;
+        RefreshUiState();
+
+        Debug.Log($"Mirror painting: {(mirrorPaintingEnabled ? "ON" : "OFF")}");
+    }
+
+    public void SetMirrorPainting(bool enabled)
+    {
+        mirrorPaintingEnabled = enabled;
+        RefreshUiState();
+    }
+
+    Vector2Int GetMirroredCoord(Vector2Int coord)
+    {
+        Vector2Int local = coord - AnchorCoord;
+        Vector2Int mirroredLocal = new Vector2Int(-local.x, local.y);
+
+        return AnchorCoord + mirroredLocal;
+    }
+
+    List<Vector2Int> GetPaintCoords(Vector2Int coord)
+    {
+        List<Vector2Int> result = new();
+
+        if (views.ContainsKey(coord))
+            result.Add(coord);
+
+        if (mirrorPaintingEnabled)
+        {
+            Vector2Int mirrored = GetMirroredCoord(coord);
+
+            if (mirrored != coord && views.ContainsKey(mirrored))
+                result.Add(mirrored);
+        }
+
+        return result;
+    }
+
+    void RegisterInputActions(bool register)
+    {
+        RegisterAction(baseSizeAction, OnBaseSizeInput, register);
+        RegisterAction(supportRangeAction, OnSupportRangeInput, register);
+        RegisterAction(finishedAction, OnFinishedInput, register);
+
+        RegisterAction(selectAction, OnSelectInput, register);
+        RegisterAction(deselectAction, OnDeselectInput, register);
+        RegisterAction(fillAction, OnFillInput, register);
+        RegisterAction(mirrorAction, OnMirrorInput, register);
+        RegisterAction(undoAction, OnUndoInput, register);
+        RegisterAction(clearAction, OnClearInput, register);
+
+        RegisterAction(anchorCenterAction, OnAnchorCenterInput, register);
+        RegisterAction(anchorCornerAction, OnAnchorCornerInput, register);
+        RegisterAction(anchorSideMidpointAction, OnAnchorSideMidpointInput, register);
+        RegisterAction(triangleFacingAction, OnTriangleFacingInput, register);
+
+        RegisterAction(paintAction, null, register);
+    }
+
+    void RegisterAction(
+        InputActionReference actionReference,
+        System.Action<InputAction.CallbackContext> callback,
+        bool register
+    )
+    {
+        if (actionReference == null || actionReference.action == null)
+            return;
+
+        InputAction action = actionReference.action;
+
+        if (register)
+        {
+            if (callback != null)
+                action.performed += callback;
+
+            if (enableActionsManually)
+                action.Enable();
+        }
+        else
+        {
+            if (callback != null)
+                action.performed -= callback;
+
+            if (enableActionsManually)
+                action.Disable();
+        }
+    }
+
+    void OnTriangleFacingInput(InputAction.CallbackContext context)
+    {
+        ToggleTriangleFacing();
+    }
+
+    void OnBaseSizeInput(InputAction.CallbackContext context)
+    {
+        SetTargetBaseSize();
+    }
+
+    void OnSupportRangeInput(InputAction.CallbackContext context)
+    {
+        SetTargetSupportRange();
+    }
+
+    void OnFinishedInput(InputAction.CallbackContext context)
+    {
+        SaveToUnitDefinition();
+    }
+
+    void OnSelectInput(InputAction.CallbackContext context)
+    {
+        SetPaintSelect();
+    }
+
+    void OnDeselectInput(InputAction.CallbackContext context)
+    {
+        SetPaintDeselect();
+    }
+
+    void OnFillInput(InputAction.CallbackContext context)
+    {
+        FillCurrentRows();
+    }
+
+    void OnMirrorInput(InputAction.CallbackContext context)
+    {
+        ToggleMirrorPainting();
+    }
+
+    void OnUndoInput(InputAction.CallbackContext context)
+    {
+        Undo();
+    }
+
+    void OnClearInput(InputAction.CallbackContext context)
+    {
+        ClearCurrentArea();
+    }
+
+    void OnAnchorCenterInput(InputAction.CallbackContext context)
+    {
+        SetAnchorTriangleCenter();
+    }
+
+    void OnAnchorCornerInput(InputAction.CallbackContext context)
+    {
+        SetAnchorCorner();
+    }
+
+    void OnAnchorSideMidpointInput(InputAction.CallbackContext context)
+    {
+        SetAnchorSideMidpoint();
+    }
+
+    public bool IsPaintHeld()
+    {
+        if (paintAction != null && paintAction.action != null)
+            return paintAction.action.IsPressed();
+
+        if (Mouse.current != null)
+            return Mouse.current.leftButton.isPressed;
+
+        return false;
+    }
+
+    void CreateOrRefreshCenterMarker()
+    {
+        if (centerMarkerObject == null)
+        {
+            centerMarkerObject = new GameObject("Builder Center Marker");
+            centerMarkerObject.transform.SetParent(gridRoot != null ? gridRoot : transform, false);
+
+            MeshFilter meshFilter = centerMarkerObject.AddComponent<MeshFilter>();
+            MeshRenderer meshRenderer = centerMarkerObject.AddComponent<MeshRenderer>();
+
+            meshFilter.sharedMesh = CreateCircleMesh(centerMarkerRadius, centerMarkerSegments);
+
+            if (centerMarkerMaterial != null)
+                meshRenderer.sharedMaterial = centerMarkerMaterial;
+            else
+                meshRenderer.sharedMaterial = triangleMaterial;
+
+            meshRenderer.sortingOrder = 100;
+        }
+
+        centerMarkerObject.SetActive(showCenterMarker);
+        centerMarkerObject.transform.SetParent(gridRoot != null ? gridRoot : transform, false);
+        centerMarkerObject.transform.localPosition = new Vector3(0f, 0f, -0.05f);
+
+        MeshRenderer renderer = centerMarkerObject.GetComponent<MeshRenderer>();
+
+        if (renderer != null)
+        {
+            MaterialPropertyBlock block = new MaterialPropertyBlock();
+            renderer.GetPropertyBlock(block);
+            block.SetColor("_Color", centerMarkerColor);
+            block.SetColor("_BaseColor", centerMarkerColor);
+            renderer.SetPropertyBlock(block);
+        }
+    }
+
+    Mesh CreateCircleMesh(float radius, int segments)
+    {
+        segments = Mathf.Max(8, segments);
+
+        Vector3[] vertices = new Vector3[segments + 1];
+        int[] triangles = new int[segments * 3];
+
+        vertices[0] = Vector3.zero;
+
+        for (int i = 0; i < segments; i++)
+        {
+            float angle = (i / (float)segments) * Mathf.PI * 2f;
+            vertices[i + 1] = new Vector3(
+                Mathf.Cos(angle) * radius,
+                Mathf.Sin(angle) * radius,
+                0f
+            );
+        }
+
+        for (int i = 0; i < segments; i++)
+        {
+            int triangleIndex = i * 3;
+
+            triangles[triangleIndex] = 0;
+            triangles[triangleIndex + 1] = i + 1;
+            triangles[triangleIndex + 2] = i == segments - 1 ? 1 : i + 2;
+        }
+
+        Mesh mesh = new Mesh();
+        mesh.name = "Builder Center Marker Mesh";
+        mesh.vertices = vertices;
+        mesh.triangles = triangles;
+        mesh.RecalculateNormals();
+        mesh.RecalculateBounds();
+
+        return mesh;
+    }
+
+    void RefreshUiState()
+    {
+        SetButtonColor(
+            baseSizeButton,
+            currentArea == UnitFootprintArea.BaseSize ? buttonActiveColor : buttonInactiveColor
+        );
+
+        SetButtonColor(
+            supportRangeButton,
+            currentArea == UnitFootprintArea.SupportRange ? buttonActiveColor : buttonInactiveColor
+        );
+
+        SetButtonColor(
+            selectButton,
+            paintMode == UnitBuilderPaintMode.Select ? buttonActiveColor : buttonInactiveColor
+        );
+
+        SetButtonColor(
+            deselectButton,
+            paintMode == UnitBuilderPaintMode.Deselect ? buttonActiveColor : buttonInactiveColor
+        );
+
+        SetButtonColor(
+            mirrorButton,
+            mirrorPaintingEnabled ? mirrorActiveColor : buttonInactiveColor
+        );
+
+        SetButtonColor(
+            anchorCenterButton,
+            anchorType == UnitAnchorType.TriangleCenter ? buttonActiveColor : buttonInactiveColor
+        );
+
+        SetButtonColor(
+            anchorCornerButton,
+            anchorType == UnitAnchorType.Corner ? buttonActiveColor : buttonInactiveColor
+        );
+
+        SetButtonColor(
+            anchorSideMidpointButton,
+            anchorType == UnitAnchorType.SideMidpoint ? buttonActiveColor : buttonInactiveColor
+        );
+
+        if (triangleFacingButton != null)
+        {
+            SetButtonColor(
+                triangleFacingButton,
+                editedAnchorOrientation == TriangleOrientation.Up
+                    ? upOrientationColor
+                    : downOrientationColor
+            );
+        }
+
+        if (anchorOrientationButtonText != null)
+        {
+            anchorOrientationButtonText.text = editedAnchorOrientation == TriangleOrientation.Up
+                ? "Up"
+                : "Down";
+        }
+    }
+
+    void SetButtonColor(Button button, Color color)
+    {
+        if (button == null)
+            return;
+
+        Image image = button.targetGraphic as Image;
+
+        if (image == null)
+            image = button.GetComponent<Image>();
+
+        if (image != null)
+            image.color = color;
+    }
+
+    private void Reset()
+    {
+        showCenterMarker = true;
+    }
+
+    void ApplyDefaultToolState()
+    {
+        currentArea = UnitFootprintArea.BaseSize;
+        paintMode = UnitBuilderPaintMode.Select;
+        mirrorPaintingEnabled = false;
+        showCenterMarker = showCenterMarkerByDefault;
+    }
+
+    bool ShouldFlipBuilderOrientation()
 {
-    if (hoveredCoord.HasValue && hoveredCoord.Value == coord)
-        return;
-
-    Vector2Int? oldHover = hoveredCoord;
-    hoveredCoord = coord;
-
-    if (oldHover.HasValue)
-        RefreshTriangleColor(oldHover.Value);
-
-    RefreshTriangleColor(coord);
+    TriangleOrientation currentAnchorOrientation = GetRawOrientation(AnchorCoord);
+    return currentAnchorOrientation != editedAnchorOrientation;
 }
 
-public void ClearHoveredTriangle(Vector2Int coord)
+TriangleOrientation GetRawOrientation(Vector2Int coord)
 {
-    if (!hoveredCoord.HasValue)
-        return;
+    bool useFirstColumnIsUp = geometrySource != null
+        ? geometrySource.firstColumnIsUp
+        : firstColumnIsUp;
 
-    if (hoveredCoord.Value != coord)
-        return;
+    bool evenColumn = Mathf.Abs(coord.x % 2) == 0;
 
-    hoveredCoord = null;
-    RefreshTriangleColor(coord);
+    bool isUp = useFirstColumnIsUp
+        ? evenColumn
+        : !evenColumn;
+
+    return isUp ? TriangleOrientation.Up : TriangleOrientation.Down;
 }
 }
