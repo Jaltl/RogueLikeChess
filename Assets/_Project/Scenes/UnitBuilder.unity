@@ -2027,7 +2027,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 84d4d5e3df2cb364eb45fca3450b8ee1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitFootprintBuilder
-  unitDefinition: {fileID: 11400000, guid: 09748523c0a5f774ca958265d97de53c, type: 2}
+  unitDefinition: {fileID: 11400000, guid: 48484938e5208924d8c02991c368f3bd, type: 2}
   geometrySource: {fileID: 0}
   columns: 61
   rows: 19

@@ -1,0 +1,51 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1a0430d09a8ad5419b0ed7d40fe2d45, type: 3}
+  m_Name: Rose-def
+  m_EditorClassIdentifier: Assembly-CSharp::UnitDefinition
+  unitName: Rose
+  unitIcon: {fileID: -9166084717782916886, guid: 42c213ffa08918d49ad0a009d4500337, type: 3}
+  unitPrefab: {fileID: 6081224204154420981, guid: e0aa77a542cefe546b3680cadc6e93ef, type: 3}
+  health: 0
+  power: 3
+  cost: 2
+  anchorType: 1
+  baseSize:
+  - x: -2
+    y: -1
+  - x: -1
+    y: -1
+  - x: 0
+    y: -1
+  - x: -2
+    y: 0
+  - x: -1
+    y: 0
+  - x: 0
+    y: 0
+  supportRange:
+  - x: -3
+    y: 0
+  - x: 1
+    y: 0
+  - x: -3
+    y: 1
+  - x: -2
+    y: 1
+  - x: -1
+    y: 1
+  - x: 0
+    y: 1
+  - x: 1
+    y: 1
+  baseSizeDown: []
+  supportRangeDown: []
