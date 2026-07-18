@@ -2,10 +2,7 @@ using UnityEngine;
 
 public enum UnitAnchorType
 {
-    TriangleCenter,
-    Corner,
-    SideMidpoint,
-    triangleFacing
+    Corner
 }
 
 public enum UnitFootprintArea
@@ -14,17 +11,27 @@ public enum UnitFootprintArea
     SupportRange
 }
 
+public enum UnitFootprintFacing
+{
+    Up = 0,
+    UpRight = 1,
+    DownRight = 2,
+    Down = 3,
+    DownLeft = 4,
+    UpLeft = 5
+}
+
 [System.Serializable]
 public struct TriangleFootprintCell
 {
-    public int x;
-    public int y;
+    public float localX;
+    public float localY;
 
-    public TriangleFootprintCell(int x, int y)
+    public TriangleFootprintCell(float localX, float localY)
     {
-        this.x = x;
-        this.y = y;
+        this.localX = localX;
+        this.localY = localY;
     }
 
-    public Vector2Int Coord => new Vector2Int(x, y);
+    public Vector2 LocalOffset => new Vector2(localX, localY);
 }

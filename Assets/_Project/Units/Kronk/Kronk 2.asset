@@ -18,140 +18,63 @@ MonoBehaviour:
   health: 10
   power: 1
   cost: 1
-  anchorType: 1
+  anchorType: 0
   baseSize:
-  - x: -4
-    y: -1
-  - x: -3
-    y: -1
-  - x: -2
-    y: -1
-  - x: -1
-    y: -1
-  - x: 0
-    y: -1
-  - x: 1
-    y: -1
-  - x: 2
-    y: -1
-  - x: 3
-    y: -1
-  - x: 4
-    y: -1
-  - x: -4
-    y: 0
-  - x: -3
-    y: 0
-  - x: -2
-    y: 0
-  - x: -1
-    y: 0
-  - x: 0
-    y: 0
-  - x: 1
-    y: 0
-  - x: 2
-    y: 0
-  - x: 3
-    y: 0
-  - x: 4
-    y: 0
-  - x: -3
-    y: 1
-  - x: -2
-    y: 1
-  - x: -1
-    y: 1
-  - x: 0
-    y: 1
-  - x: 1
-    y: 1
-  - x: 2
-    y: 1
-  - x: 3
-    y: 1
-  - x: -2
-    y: 2
-  - x: -1
-    y: 2
-  - x: 0
-    y: 2
-  - x: 1
-    y: 2
-  - x: 2
-    y: 2
-  - x: -1
-    y: 3
-  - x: 0
-    y: 3
-  - x: 1
-    y: 3
-  supportRange: []
-  baseSizeDown:
-  - x: -4
-    y: 0
-  - x: -3
-    y: 0
-  - x: -2
-    y: 0
-  - x: -1
-    y: 0
-  - x: 0
-    y: 0
-  - x: 1
-    y: 0
-  - x: 2
-    y: 0
-  - x: 3
-    y: 0
-  - x: 4
-    y: 0
-  - x: -4
-    y: 1
-  - x: -3
-    y: 1
-  - x: -2
-    y: 1
-  - x: -1
-    y: 1
-  - x: 0
-    y: 1
-  - x: 1
-    y: 1
-  - x: 2
-    y: 1
-  - x: 3
-    y: 1
-  - x: 4
-    y: 1
-  - x: -3
-    y: 2
-  - x: -2
-    y: 2
-  - x: -1
-    y: 2
-  - x: 0
-    y: 2
-  - x: 1
-    y: 2
-  - x: 2
-    y: 2
-  - x: 3
-    y: 2
-  - x: -2
-    y: 3
-  - x: -1
-    y: 3
-  - x: 0
-    y: 3
-  - x: 1
-    y: 3
-  - x: 2
-    y: 3
-  - x: -1
-    y: 4
-  - x: 0
-    y: 4
-  - x: 1
-    y: 4
-  supportRangeDown: []
+  - localX: -0.5
+    localY: -1.4433757
+  - localX: 0.5
+    localY: -1.4433757
+  - localX: -1
+    localY: -1.1547006
+  - localX: 0
+    localY: -1.1547006
+  - localX: 1
+    localY: -1.1547006
+  - localX: -1
+    localY: -0.5773503
+  - localX: 0
+    localY: -0.5773503
+  - localX: 1
+    localY: -0.5773503
+  - localX: -0.5
+    localY: -0.28867516
+  - localX: 0.5
+    localY: -0.28867516
+  - localX: -0.5
+    localY: 0.28867498
+  - localX: 0.5
+    localY: 0.28867498
+  - localX: 0
+    localY: 0.57734996
+  supportRange:
+  - localX: -1.5
+    localY: -0.28867516
+  - localX: 1.5
+    localY: -0.28867516
+  - localX: -1.5
+    localY: 0.28867498
+  - localX: 1.5
+    localY: 0.28867498
+  - localX: -1
+    localY: 0.57734996
+  - localX: 1
+    localY: 0.57734996
+  - localX: -1
+    localY: 1.1546999
+  - localX: 0
+    localY: 1.1546999
+  - localX: 1
+    localY: 1.1546999
+  - localX: -0.5
+    localY: 1.443375
+  - localX: 0.5
+    localY: 1.443375
+  - localX: -0.5
+    localY: 2.020726
+  - localX: 0.5
+    localY: 2.020726
+  - localX: 0
+    localY: 2.3094008
+  placementExpansion: 1
+  footprintRadius: 1.5
+  footprintRotationDegrees: 0
