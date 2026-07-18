@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 8120242120382045686}
   - component: {fileID: 6081224204154420981}
   m_Layer: 0
-  m_Name: KronkUnitPrefab (1)
+  m_Name: Unit - Kronk 2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -46,7 +46,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitPiece
   definition: {fileID: 11400000, guid: a16d17940659b494286ed91a8a91aed2, type: 2}
-  owner: 0
+  spriteRenderer: {fileID: 1440229320512007226}
 --- !u!1 &2471858520560983439
 GameObject:
   m_ObjectHideFlags: 0
@@ -128,7 +128,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 1
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -8623084541202537176, guid: b0be9977abd608d4daafef7fb7fb2d2e, type: 3}
+  m_Sprite: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -136,5 +136,5 @@ SpriteRenderer:
   m_Size: {x: 0.73333335, y: 0.9}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_SpriteSortPoint: 0

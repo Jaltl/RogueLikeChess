@@ -344,6 +344,13 @@ MonoBehaviour:
   pointerPositionAction: {fileID: 2408000049662550838, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   placeAction: {fileID: 882660288202820823, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   cancelAction: {fileID: -2932582040274752406, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
+  rotateFootprintAction: {fileID: -5010730613257958138, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
+  rotateUP: {fileID: -4906814112338415116, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
+  rotateUpRight: {fileID: 6848730658369640278, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
+  rotateBottomRight: {fileID: 1345715297786862124, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
+  rotateBottom: {fileID: 7219283969948578680, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
+  rotateBottomLeft: {fileID: 4864389037829822031, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
+  rotateUpLeft: {fileID: 2632341511312239375, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   snapDistanceMultiplier: 1.2
   ignorePointerOverUi: 0
   showAnchorMarker: 1
@@ -375,7 +382,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 755225551}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
@@ -486,7 +493,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2194543611035507895, guid: a587b22c142b07147a0e6cd445477e5c, type: 3}
       propertyPath: m_Name
-      value: Kronk (2)
+      value: Unit Card - Kronk 2
       objectReference: {fileID: 0}
     - target: {fileID: 4531823320698962897, guid: a587b22c142b07147a0e6cd445477e5c, type: 3}
       propertyPath: iconImage
@@ -976,7 +983,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2194543611035507895, guid: a587b22c142b07147a0e6cd445477e5c, type: 3}
       propertyPath: m_Name
-      value: Kronk (1)
+      value: Unit Card - Kronk 2
       objectReference: {fileID: 0}
     - target: {fileID: 4531823320698962897, guid: a587b22c142b07147a0e6cd445477e5c, type: 3}
       propertyPath: iconImage
@@ -1014,7 +1021,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 1108669241}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
@@ -1300,7 +1307,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 2194543611035507895, guid: a587b22c142b07147a0e6cd445477e5c, type: 3}
       propertyPath: m_Name
-      value: Kronk
+      value: Unit Card - Kronk
       objectReference: {fileID: 0}
     - target: {fileID: 4531823320698962897, guid: a587b22c142b07147a0e6cd445477e5c, type: 3}
       propertyPath: iconImage
@@ -1338,7 +1345,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 1760830402}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fe87c0e1cc204ed48ad3b37840f39efc, type: 3}
   m_Name: 
@@ -1522,7 +1529,7 @@ MonoBehaviour:
   sortingLayerName: Default
   zOffset: -0.1
   placementColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
-  hoverColor: {r: 1, g: 1, b: 1, a: 1}
+  hoverColor: {r: 0.19999999, g: 0.89423, b: 1, a: 1}
   footprintColor: {r: 0.2, g: 0.5, b: 1, a: 1}
   invalidColor: {r: 1, g: 0, b: 0, a: 1}
 --- !u!1660057539 &9223372036854775807

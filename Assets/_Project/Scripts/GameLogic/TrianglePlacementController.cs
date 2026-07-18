@@ -19,6 +19,18 @@ public class TrianglePlacementController : MonoBehaviour
     [SerializeField] private InputActionReference placeAction;
     [SerializeField] private InputActionReference cancelAction;
 
+    [Header("Unit Rotation")]
+    [SerializeField] private InputActionReference rotateFootprintAction;
+
+    [SerializeField] private InputActionReference rotateUP;
+    [SerializeField] private InputActionReference rotateUpRight;
+    [SerializeField] private InputActionReference rotateBottomRight;
+    [SerializeField] private InputActionReference rotateBottom;
+    [SerializeField] private InputActionReference rotateBottomLeft;
+    [SerializeField] private InputActionReference rotateUpLeft;
+
+private UnitFootprintFacing currentFacing = UnitFootprintFacing.Up;
+
     [Header("Placement")]
     [SerializeField] private float snapDistanceMultiplier = 1.2f;
     [SerializeField] private bool ignorePointerOverUi = true;
@@ -112,6 +124,14 @@ public class TrianglePlacementController : MonoBehaviour
     {
         RegisterAction(placeAction, OnPlaceInput, register);
         RegisterAction(cancelAction, OnCancelInput, register);
+        RegisterAction(rotateFootprintAction, OnRotateFootprintInput, register);
+
+    RegisterAction(rotateUP, OnFacingUpInput, register);
+    RegisterAction(rotateUpRight, OnFacingUpRightInput, register);
+    RegisterAction(rotateBottomRight, OnFacingDownRightInput, register);
+    RegisterAction(rotateBottom, OnFacingDownInput, register);
+    RegisterAction(rotateBottomLeft, OnFacingDownLeftInput, register);
+    RegisterAction(rotateUpLeft, OnFacingUpLeftInput, register);
 
         if (pointerPositionAction != null && pointerPositionAction.action != null)
         {
@@ -124,32 +144,25 @@ public class TrianglePlacementController : MonoBehaviour
     }
 
     void RegisterAction(
-        InputActionReference actionReference,
-        System.Action<InputAction.CallbackContext> callback,
-        bool register
-    )
+    InputActionReference actionReference,
+    System.Action<InputAction.CallbackContext> callback,
+    bool register
+)
+{
+    if (actionReference == null || actionReference.action == null)
+        return;
+
+    if (register)
     {
-        if (actionReference == null || actionReference.action == null)
-            return;
-
-        InputAction action = actionReference.action;
-
-        if (register)
-        {
-            action.performed += callback;
-
-            if (enableActionsManually)
-                action.Enable();
-        }
-        else
-        {
-            action.performed -= callback;
-
-            if (enableActionsManually)
-                action.Disable();
-        }
+        actionReference.action.performed += callback;
+        actionReference.action.Enable();
     }
-
+    else
+    {
+        actionReference.action.performed -= callback;
+        actionReference.action.Disable();
+    }
+}
     void OnPlaceInput(InputAction.CallbackContext context)
     {
         Debug.Log("Place input received.");
@@ -197,6 +210,7 @@ public class TrianglePlacementController : MonoBehaviour
     public void SelectUnit(UnitDefinition unit)
     {
         selectedUnit = unit;
+        currentFacing = UnitFootprintFacing.Up;
 
         if (selectedUnit != null)
             Debug.Log($"Selected unit: {selectedUnit.unitName}");
@@ -257,6 +271,7 @@ public class TrianglePlacementController : MonoBehaviour
             grid,
             selectedUnit,
             pointerWorld,
+            currentFacing,
             MaxSnapDistance,
             out currentPreview,
             null
@@ -610,8 +625,7 @@ public class TrianglePlacementController : MonoBehaviour
 
     bool IsPointerOverUi()
     {
-        return EventSystem.current != null &&
-               EventSystem.current.IsPointerOverGameObject();
+        return EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
     }
 
     void UpdateAnchorMarker(UnitPlacementResult placement, bool isValid)
@@ -678,4 +692,71 @@ public class TrianglePlacementController : MonoBehaviour
 
         anchorMarkerObject.SetActive(false);
     }
+
+   void OnRotateFootprintInput(InputAction.CallbackContext context)
+{
+    Vector2 scroll = context.ReadValue<Vector2>();
+
+    if (scroll.y > 0f)
+        RotateFootprint(1);
+    else if (scroll.y < 0f)
+        RotateFootprint(-1);
+}
+
+void OnFacingUpInput(InputAction.CallbackContext context)
+{
+    SetFootprintFacing(UnitFootprintFacing.Up);
+}
+
+void OnFacingUpRightInput(InputAction.CallbackContext context)
+{
+    SetFootprintFacing(UnitFootprintFacing.UpRight);
+}
+
+void OnFacingDownRightInput(InputAction.CallbackContext context)
+{
+    SetFootprintFacing(UnitFootprintFacing.DownRight);
+}
+
+void OnFacingDownInput(InputAction.CallbackContext context)
+{
+    SetFootprintFacing(UnitFootprintFacing.Down);
+}
+
+void OnFacingDownLeftInput(InputAction.CallbackContext context)
+{
+    SetFootprintFacing(UnitFootprintFacing.DownLeft);
+}
+
+void OnFacingUpLeftInput(InputAction.CallbackContext context)
+{
+    SetFootprintFacing(UnitFootprintFacing.UpLeft);
+}
+
+void RotateFootprint(int direction)
+{
+    int value = (int)currentFacing;
+    value += direction;
+
+    if (value < 0)
+        value = 5;
+
+    if (value > 5)
+        value = 0;
+
+    SetFootprintFacing((UnitFootprintFacing)value);
+}
+
+void SetFootprintFacing(UnitFootprintFacing facing)
+{
+    if (currentFacing == facing)
+        return;
+
+    currentFacing = facing;
+
+    Debug.Log($"Footprint facing: {currentFacing}");
+
+    if (selectedUnit != null)
+        UpdatePreviewFromPointer();
+}
 }

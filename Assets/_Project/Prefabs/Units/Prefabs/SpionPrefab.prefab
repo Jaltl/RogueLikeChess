@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 5212077505339327664}
   - component: {fileID: 1463662199662474885}
   m_Layer: 0
-  m_Name: SpionPrefab
+  m_Name: Unit - Spion
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -46,7 +46,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Unit
   definition: {fileID: 11400000, guid: ed1d406efd85cf345be82b099d8c0cda, type: 2}
-  owner: 0
+  spriteRenderer: {fileID: 201349855842637030}
 --- !u!1 &8347351887747215646
 GameObject:
   m_ObjectHideFlags: 0
