@@ -5,7 +5,7 @@ using UnityEngine;
 [RequireComponent(typeof(PolygonCollider2D))]
 public class UnitBuilderTriangleView : MonoBehaviour
 {
-    private UnitFootprintBuilder builder;
+    public UnitFootprintBuilder builder;
     private Vector2Int coord;
 
     private MeshRenderer meshRenderer;

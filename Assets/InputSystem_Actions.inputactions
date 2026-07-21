@@ -294,15 +294,6 @@
                     "processors": "",
                     "interactions": "Press",
                     "initialStateCheck": false
-                },
-                {
-                    "name": "Paint",
-                    "type": "Button",
-                    "id": "2fa69458-bf15-4595-ab0b-3c7a3bf73d9c",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "Press",
-                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -342,7 +333,7 @@
                 {
                     "name": "",
                     "id": "416e2eb4-32f6-44e8-bd0d-a7bfdc9ae84b",
-                    "path": "<Keyboard>/a",
+                    "path": "<Mouse>/leftButton",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -353,7 +344,7 @@
                 {
                     "name": "",
                     "id": "7eca26e8-48a4-4faf-9076-675c24d86f33",
-                    "path": "<Keyboard>/s",
+                    "path": "<Mouse>/rightButton",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -402,17 +393,6 @@
                     "processors": "",
                     "groups": "",
                     "action": "Clear",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "8b8b04ac-d543-4c99-9f03-8bfb71077ec7",
-                    "path": "<Mouse>/leftButton",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Paint",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

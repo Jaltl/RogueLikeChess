@@ -7,12 +7,6 @@ using UnityEngine.UI;
 using UnityEditor;
 #endif
 
-public enum UnitBuilderPaintMode
-{
-    Select,
-    Deselect
-}
-
 public class UnitFootprintBuilder : MonoBehaviour
 {
     [Header("Unit Asset")]
@@ -48,7 +42,6 @@ public class UnitFootprintBuilder : MonoBehaviour
 
     [Header("Current Builder State")]
     [SerializeField] private UnitFootprintArea currentArea = UnitFootprintArea.BaseSize;
-    [SerializeField] private UnitBuilderPaintMode paintMode = UnitBuilderPaintMode.Select;
 
     [Header("Mirror Painting")]
     [SerializeField] private bool mirrorPaintingEnabled;
@@ -65,9 +58,6 @@ public class UnitFootprintBuilder : MonoBehaviour
     [SerializeField] private InputActionReference undoAction;
     [SerializeField] private InputActionReference clearAction;
 
-    [Header("Painting Input")]
-    [SerializeField] private InputActionReference paintAction;
-
     [Header("Anchor Marker")]
     [SerializeField] private bool showAnchorMarker = true;
     [SerializeField] private bool showAnchorMarkerByDefault = true;
@@ -82,8 +72,6 @@ public class UnitFootprintBuilder : MonoBehaviour
     [SerializeField] private Color mirrorActiveColor = new Color(0.25f, 0.9f, 1f, 1f);
     [SerializeField] private Button baseSizeButton;
     [SerializeField] private Button supportRangeButton;
-    [SerializeField] private Button selectButton;
-    [SerializeField] private Button deselectButton;
     [SerializeField] private Button mirrorButton;
 
     private readonly Stack<BuilderSnapshot> undoStack = new();
@@ -98,6 +86,8 @@ public class UnitFootprintBuilder : MonoBehaviour
     private Vector2Int AnchorCoord => new Vector2Int(columns / 2, rows / 2);
     private float SideLength => geometrySource != null ? geometrySource.sideLength : fallbackSideLength;
     private float TriangleHeight => SideLength * Mathf.Sqrt(3f) * 0.5f;
+
+    private bool isPainting = false;
 
     private struct BuilderSnapshot
     {
@@ -318,38 +308,70 @@ public class UnitFootprintBuilder : MonoBehaviour
         if (!views.ContainsKey(coord))
             return false;
 
+        bool isEditingBase = currentArea == UnitFootprintArea.BaseSize;
         bool isEditingSupport = currentArea == UnitFootprintArea.SupportRange;
 
-        if (isEditingSupport && paintMode == UnitBuilderPaintMode.Select && baseSelection.Contains(coord))
-            return false;
-
-        HashSet<Vector2Int> target = GetCurrentSelection();
-        bool alreadySelected = target.Contains(coord);
-
-        return paintMode == UnitBuilderPaintMode.Select
-            ? !alreadySelected
-            : alreadySelected;
-    }
-
-    private void ApplyPaintToTriangle(Vector2Int coord)
-    {
-        if (!WouldPaintChangeTriangle(coord))
-            return;
-
-        bool isEditingBase = currentArea == UnitFootprintArea.BaseSize;
-        HashSet<Vector2Int> target = GetCurrentSelection();
-
-        if (paintMode == UnitBuilderPaintMode.Select)
+        if (isPainting)
         {
-            target.Add(coord);
-
             if (isEditingBase)
-                supportSelection.Remove(coord);
+                return !baseSelection.Contains(coord);
+
+            if (isEditingSupport)
+                return !baseSelection.Contains(coord) && !supportSelection.Contains(coord);
+
+            return false;
         }
         else
         {
+            if (isEditingBase)
+                return baseSelection.Contains(coord);
+
+            if (isEditingSupport)
+                return supportSelection.Contains(coord);
+
+            return false;
+        }
+    }
+    private void ApplyPaintToTriangle(Vector2Int coord)
+    {
+        HashSet<Vector2Int> target = currentArea == UnitFootprintArea.BaseSize ? baseSelection : supportSelection;
+
+        bool wouldChange;
+
+        if(isPainting)
+            if(currentArea == UnitFootprintArea.BaseSize)
+                wouldChange = !baseSelection.Contains(coord);
+            else
+                wouldChange = !baseSelection.Contains(coord) && !supportSelection.Contains(coord);
+        else
+            wouldChange = target.Contains(coord);
+
+        if (!wouldChange)
+            return;
+
+        if (isPainting)
+        {
+            Debug.Log($"Adding coord {coord} to current selection");
+            if(currentArea == UnitFootprintArea.BaseSize)
+            {
+                baseSelection.Add(coord);
+                supportSelection.Remove(coord);
+            }
+            else
+            {
+                if(!baseSelection.Contains(coord))
+                    supportSelection.Add(coord);
+            }
+
+        }
+        else
+        {
+            Debug.Log($"Removing coord {coord} from current selection");
             target.Remove(coord);
         }
+
+        RefreshTriangleColor(coord);
+        RefreshUiState();
     }
 
     private HashSet<Vector2Int> GetCurrentSelection()
@@ -638,14 +660,12 @@ public class UnitFootprintBuilder : MonoBehaviour
 
     public void SetPaintSelect()
     {
-        paintMode = UnitBuilderPaintMode.Select;
-        RefreshUiState();
+        isPainting = true;
     }
 
     public void SetPaintDeselect()
     {
-        paintMode = UnitBuilderPaintMode.Deselect;
-        RefreshUiState();
+        isPainting = false;
     }
 
     public void ToggleAnchorMarker()
@@ -746,7 +766,6 @@ public class UnitFootprintBuilder : MonoBehaviour
         RegisterAction(mirrorAction, OnMirrorInput, register);
         RegisterAction(undoAction, OnUndoInput, register);
         RegisterAction(clearAction, OnClearInput, register);
-        RegisterAction(paintAction, null, register);
     }
 
     private void RegisterAction(
@@ -790,13 +809,17 @@ public class UnitFootprintBuilder : MonoBehaviour
 
     public bool IsPaintHeld()
     {
-        if (paintAction != null && paintAction.action != null)
-            return paintAction.action.IsPressed();
+        bool selectHeld =
+            selectAction != null &&
+            selectAction.action != null &&
+            selectAction.action.IsPressed();
 
-        if (Mouse.current != null)
-            return Mouse.current.leftButton.isPressed;
+        bool deselectHeld =
+            deselectAction != null &&
+            deselectAction.action != null &&
+            deselectAction.action.IsPressed();
 
-        return false;
+        return selectHeld || deselectHeld;
     }
 
     private void CreateOrRefreshAnchorMarker()
@@ -871,8 +894,6 @@ public class UnitFootprintBuilder : MonoBehaviour
     {
         SetButtonColor(baseSizeButton, currentArea == UnitFootprintArea.BaseSize ? buttonActiveColor : buttonInactiveColor);
         SetButtonColor(supportRangeButton, currentArea == UnitFootprintArea.SupportRange ? buttonActiveColor : buttonInactiveColor);
-        SetButtonColor(selectButton, paintMode == UnitBuilderPaintMode.Select ? buttonActiveColor : buttonInactiveColor);
-        SetButtonColor(deselectButton, paintMode == UnitBuilderPaintMode.Deselect ? buttonActiveColor : buttonInactiveColor);
         SetButtonColor(mirrorButton, mirrorPaintingEnabled ? mirrorActiveColor : buttonInactiveColor);
     }
 
@@ -898,7 +919,6 @@ public class UnitFootprintBuilder : MonoBehaviour
     private void ApplyDefaultToolState()
     {
         currentArea = UnitFootprintArea.BaseSize;
-        paintMode = UnitBuilderPaintMode.Select;
         mirrorPaintingEnabled = false;
         showAnchorMarker = showAnchorMarkerByDefault;
     }

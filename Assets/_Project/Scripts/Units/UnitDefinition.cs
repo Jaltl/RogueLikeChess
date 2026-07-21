@@ -8,14 +8,16 @@ public class UnitDefinition : ScriptableObject
     [Header("Identity")]
     public string unitName;
 
-    [FormerlySerializedAs("icon")]
+    [Header("unit icon")]
     public Sprite unitIcon;
+    
+    [Header("card icon")]
+    public Sprite cardIcon;
 
     [Header("Prefab")]
     public UnitPiece unitPrefab;
 
     [Header("Stats")]
-    public int health = 10;
     public int power = 1;
     public int cost = 1;
 
@@ -25,9 +27,6 @@ public class UnitDefinition : ScriptableObject
     [Header("Triangle Footprints")]
     public List<TriangleFootprintCell> baseSize = new();
     public List<TriangleFootprintCell> supportRange = new();
-
-    // Legacy read-only alias so old scripts using unit.icon still compile.
-    public Sprite icon => unitIcon;
 
     // Legacy fields for old hex scripts. Remove these after deleting the old hex placement scripts.
     [HideInInspector] public int placementExpansion = 1;

@@ -8,13 +8,13 @@ public class UnitCardUI : MonoBehaviour
     [SerializeField] private UnitDefinition unitDefinition;
 
     [Header("Auto Found")]
-    [SerializeField] private TrianglePlacementController placementController;
     [SerializeField] private Button button;
     [SerializeField] private Image iconImage;
     [SerializeField] private TMP_Text nameText;
     [SerializeField] private TMP_Text costText;
     [SerializeField] private TMP_Text powerText;
-    [SerializeField] private TMP_Text healthText;
+
+    private TrianglePlacementController placementController;
 
     private void Reset()
     {
@@ -41,8 +41,15 @@ public class UnitCardUI : MonoBehaviour
         Refresh();
     }
 
+    private void OnEnable()
+    {
+        placementController = FindFirstObjectByType<TrianglePlacementController>();
+    }
+
     private void OnDestroy()
     {
+        placementController = null;
+
         if (button != null)
             button.onClick.RemoveListener(SelectUnit);
     }
@@ -89,13 +96,10 @@ public class UnitCardUI : MonoBehaviour
         if (powerText != null)
             powerText.text = unitDefinition.power.ToString();
 
-        if (healthText != null)
-            healthText.text = unitDefinition.health.ToString();
-
         if (iconImage != null)
         {
-            iconImage.sprite = unitDefinition.unitIcon;
-            iconImage.enabled = unitDefinition.unitIcon != null;
+            iconImage.sprite = unitDefinition.cardIcon;
+            iconImage.enabled = unitDefinition.cardIcon != null;
         }
     }
 
@@ -119,8 +123,6 @@ public class UnitCardUI : MonoBehaviour
                 costText = text;
             else if (powerText == null && lower.Contains("power"))
                 powerText = text;
-            else if (healthText == null && lower.Contains("health"))
-                healthText = text;
         }
 
         Image[] images = GetComponentsInChildren<Image>(true);
