@@ -6,6 +6,10 @@ public class TriangleBoard : MonoBehaviour
     private readonly Dictionary<TriangleNode, UnitPiece> unitsByAnchor = new();
     private readonly Dictionary<TriangleCell, UnitPiece> unitsByOccupiedCell = new();
 
+    private readonly List<UnitPiece> units = new();
+
+    public IReadOnlyList<UnitPiece> Units => units;
+
     public bool HasUnit(TriangleCell cell)
     {
         return cell != null && unitsByOccupiedCell.ContainsKey(cell);
@@ -35,6 +39,9 @@ public class TriangleBoard : MonoBehaviour
         if (unit == null || placement == null || placement.anchorNode == null)
             return;
 
+        if (!units.Contains(unit))
+            units.Add(unit);
+
         unitsByAnchor[placement.anchorNode] = unit;
 
         foreach (TriangleCell cell in placement.baseCells)
@@ -51,6 +58,8 @@ public class TriangleBoard : MonoBehaviour
         if (unit == null)
             return;
 
+        units.Remove(unit);
+
         if (unit.AnchorNode != null && unitsByAnchor.ContainsKey(unit.AnchorNode))
             unitsByAnchor.Remove(unit.AnchorNode);
 
@@ -59,10 +68,10 @@ public class TriangleBoard : MonoBehaviour
             if (cell == null)
                 continue;
 
-            if (unitsByOccupiedCell.TryGetValue(cell, out UnitPiece occupyingUnit))
+            if (unitsByOccupiedCell.TryGetValue(cell, out UnitPiece occupyingUnit) &&
+                occupyingUnit == unit)
             {
-                if (occupyingUnit == unit)
-                    unitsByOccupiedCell.Remove(cell);
+                unitsByOccupiedCell.Remove(cell);
             }
         }
 
