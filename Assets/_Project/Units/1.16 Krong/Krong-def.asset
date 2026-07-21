@@ -18,346 +18,347 @@ MonoBehaviour:
   health: 0
   power: 28
   cost: 10
-  anchorType: 1
+  anchorType: 0
   baseSize:
-  - x: -4
-    y: -3
-  - x: -3
-    y: -3
-  - x: -2
-    y: -3
-  - x: -1
-    y: -3
-  - x: 0
-    y: -3
-  - x: 1
-    y: -3
-  - x: 2
-    y: -3
-  - x: -5
-    y: -2
-  - x: -4
-    y: -2
-  - x: -3
-    y: -2
-  - x: -2
-    y: -2
-  - x: -1
-    y: -2
-  - x: 0
-    y: -2
-  - x: 1
-    y: -2
-  - x: 2
-    y: -2
-  - x: 3
-    y: -2
-  - x: -6
-    y: -1
-  - x: -5
-    y: -1
-  - x: -4
-    y: -1
-  - x: -3
-    y: -1
-  - x: -2
-    y: -1
-  - x: -1
-    y: -1
-  - x: 0
-    y: -1
-  - x: 1
-    y: -1
-  - x: 2
-    y: -1
-  - x: 3
-    y: -1
-  - x: 4
-    y: -1
-  - x: -7
-    y: 0
-  - x: -6
-    y: 0
-  - x: -5
-    y: 0
-  - x: -4
-    y: 0
-  - x: -3
-    y: 0
-  - x: -2
-    y: 0
-  - x: -1
-    y: 0
-  - x: 0
-    y: 0
-  - x: 1
-    y: 0
-  - x: 2
-    y: 0
-  - x: 3
-    y: 0
-  - x: 4
-    y: 0
-  - x: 5
-    y: 0
-  - x: -7
-    y: 1
-  - x: -6
-    y: 1
-  - x: -5
-    y: 1
-  - x: -4
-    y: 1
-  - x: -3
-    y: 1
-  - x: -2
-    y: 1
-  - x: -1
-    y: 1
-  - x: 0
-    y: 1
-  - x: 1
-    y: 1
-  - x: 2
-    y: 1
-  - x: 3
-    y: 1
-  - x: 4
-    y: 1
-  - x: 5
-    y: 1
-  - x: -6
-    y: 2
-  - x: -5
-    y: 2
-  - x: -4
-    y: 2
-  - x: -3
-    y: 2
-  - x: -2
-    y: 2
-  - x: -1
-    y: 2
-  - x: 0
-    y: 2
-  - x: 1
-    y: 2
-  - x: 2
-    y: 2
-  - x: 3
-    y: 2
-  - x: 4
-    y: 2
-  - x: -5
-    y: 3
-  - x: -4
-    y: 3
-  - x: -3
-    y: 3
-  - x: -2
-    y: 3
-  - x: -1
-    y: 3
-  - x: 0
-    y: 3
-  - x: 1
-    y: 3
-  - x: 2
-    y: 3
-  - x: 3
-    y: 3
+  - localX: -1
+    localY: -2.3094013
+  - localX: 0
+    localY: -2.3094013
+  - localX: 1
+    localY: -2.3094013
+  - localX: -1.5
+    localY: -2.020726
+  - localX: -0.5
+    localY: -2.020726
+  - localX: 0.5
+    localY: -2.020726
+  - localX: 1.5
+    localY: -2.020726
+  - localX: -1.5
+    localY: -1.4433757
+  - localX: -0.5
+    localY: -1.4433757
+  - localX: 0.5
+    localY: -1.4433757
+  - localX: 1.5
+    localY: -1.4433757
+  - localX: -2
+    localY: -1.1547006
+  - localX: -1
+    localY: -1.1547006
+  - localX: 0
+    localY: -1.1547006
+  - localX: 1
+    localY: -1.1547006
+  - localX: 2
+    localY: -1.1547006
+  - localX: -2
+    localY: -0.5773503
+  - localX: -1
+    localY: -0.5773503
+  - localX: 0
+    localY: -0.5773503
+  - localX: 1
+    localY: -0.5773503
+  - localX: 2
+    localY: -0.5773503
+  - localX: -2.5
+    localY: -0.28867516
+  - localX: -1.5
+    localY: -0.28867516
+  - localX: -0.5
+    localY: -0.28867516
+  - localX: 0.5
+    localY: -0.28867516
+  - localX: 1.5
+    localY: -0.28867516
+  - localX: 2.5
+    localY: -0.28867516
+  - localX: -2.5
+    localY: 0.28867498
+  - localX: -1.5
+    localY: 0.28867498
+  - localX: -0.5
+    localY: 0.28867498
+  - localX: 0.5
+    localY: 0.28867498
+  - localX: 1.5
+    localY: 0.28867498
+  - localX: 2.5
+    localY: 0.28867498
+  - localX: -3
+    localY: 0.57734996
+  - localX: -2
+    localY: 0.57734996
+  - localX: -1
+    localY: 0.57734996
+  - localX: 0
+    localY: 0.57734996
+  - localX: 1
+    localY: 0.57734996
+  - localX: 2
+    localY: 0.57734996
+  - localX: 3
+    localY: 0.57734996
+  - localX: -3
+    localY: 1.1546999
+  - localX: -2
+    localY: 1.1546999
+  - localX: -1
+    localY: 1.1546999
+  - localX: 0
+    localY: 1.1546999
+  - localX: 1
+    localY: 1.1546999
+  - localX: 2
+    localY: 1.1546999
+  - localX: 3
+    localY: 1.1546999
+  - localX: -2.5
+    localY: 1.443375
+  - localX: -1.5
+    localY: 1.443375
+  - localX: -0.5
+    localY: 1.443375
+  - localX: 0.5
+    localY: 1.443375
+  - localX: 1.5
+    localY: 1.443375
+  - localX: 2.5
+    localY: 1.443375
+  - localX: -2.5
+    localY: 2.020726
+  - localX: -1.5
+    localY: 2.020726
+  - localX: -0.5
+    localY: 2.020726
+  - localX: 0.5
+    localY: 2.020726
+  - localX: 1.5
+    localY: 2.020726
+  - localX: 2.5
+    localY: 2.020726
+  - localX: -2
+    localY: 2.3094008
+  - localX: -1
+    localY: 2.3094008
+  - localX: 0
+    localY: 2.3094008
+  - localX: 1
+    localY: 2.3094008
+  - localX: 2
+    localY: 2.3094008
+  - localX: -2
+    localY: 2.886751
+  - localX: -1
+    localY: 2.886751
+  - localX: 0
+    localY: 2.886751
+  - localX: 1
+    localY: 2.886751
+  - localX: 2
+    localY: 2.886751
+  - localX: -1.5
+    localY: 3.1754258
+  - localX: -0.5
+    localY: 3.1754258
+  - localX: 0.5
+    localY: 3.1754258
+  - localX: 1.5
+    localY: 3.1754258
   supportRange:
-  - x: -5
-    y: -4
-  - x: -4
-    y: -4
-  - x: -3
-    y: -4
-  - x: -2
-    y: -4
-  - x: -1
-    y: -4
-  - x: 0
-    y: -4
-  - x: 1
-    y: -4
-  - x: 2
-    y: -4
-  - x: 3
-    y: -4
-  - x: -6
-    y: -3
-  - x: -5
-    y: -3
-  - x: 3
-    y: -3
-  - x: 4
-    y: -3
-  - x: -7
-    y: -2
-  - x: -6
-    y: -2
-  - x: 4
-    y: -2
-  - x: 5
-    y: -2
-  - x: -8
-    y: -1
-  - x: -7
-    y: -1
-  - x: 5
-    y: -1
-  - x: 6
-    y: -1
-  - x: -9
-    y: 0
-  - x: -8
-    y: 0
-  - x: 6
-    y: 0
-  - x: 7
-    y: 0
-  - x: -10
-    y: 1
-  - x: -9
-    y: 1
-  - x: -8
-    y: 1
-  - x: 6
-    y: 1
-  - x: 7
-    y: 1
-  - x: 8
-    y: 1
-  - x: -10
-    y: 2
-  - x: -9
-    y: 2
-  - x: -8
-    y: 2
-  - x: -7
-    y: 2
-  - x: 5
-    y: 2
-  - x: 6
-    y: 2
-  - x: 7
-    y: 2
-  - x: 8
-    y: 2
-  - x: -10
-    y: 3
-  - x: -9
-    y: 3
-  - x: -8
-    y: 3
-  - x: -7
-    y: 3
-  - x: -6
-    y: 3
-  - x: 4
-    y: 3
-  - x: 5
-    y: 3
-  - x: 6
-    y: 3
-  - x: 7
-    y: 3
-  - x: 8
-    y: 3
-  - x: -10
-    y: 4
-  - x: -9
-    y: 4
-  - x: -8
-    y: 4
-  - x: -7
-    y: 4
-  - x: -6
-    y: 4
-  - x: -5
-    y: 4
-  - x: -4
-    y: 4
-  - x: -3
-    y: 4
-  - x: -2
-    y: 4
-  - x: -1
-    y: 4
-  - x: 0
-    y: 4
-  - x: 1
-    y: 4
-  - x: 2
-    y: 4
-  - x: 3
-    y: 4
-  - x: 4
-    y: 4
-  - x: 5
-    y: 4
-  - x: 6
-    y: 4
-  - x: 7
-    y: 4
-  - x: 8
-    y: 4
-  - x: -9
-    y: 5
-  - x: -8
-    y: 5
-  - x: -7
-    y: 5
-  - x: -6
-    y: 5
-  - x: -5
-    y: 5
-  - x: -4
-    y: 5
-  - x: -3
-    y: 5
-  - x: -2
-    y: 5
-  - x: -1
-    y: 5
-  - x: 0
-    y: 5
-  - x: 1
-    y: 5
-  - x: 2
-    y: 5
-  - x: 3
-    y: 5
-  - x: 4
-    y: 5
-  - x: 5
-    y: 5
-  - x: 6
-    y: 5
-  - x: 7
-    y: 5
-  - x: -6
-    y: 6
-  - x: -5
-    y: 6
-  - x: -4
-    y: 6
-  - x: -3
-    y: 6
-  - x: -2
-    y: 6
-  - x: -1
-    y: 6
-  - x: 0
-    y: 6
-  - x: 1
-    y: 6
-  - x: 2
-    y: 6
-  - x: 3
-    y: 6
-  - x: 4
-    y: 6
-  baseSizeDown: []
-  supportRangeDown: []
+  - localX: -1.5
+    localY: -3.1754265
+  - localX: -0.5
+    localY: -3.1754265
+  - localX: 0.5
+    localY: -3.1754265
+  - localX: 1.5
+    localY: -3.1754265
+  - localX: -2
+    localY: -2.8867514
+  - localX: -1
+    localY: -2.8867514
+  - localX: 0
+    localY: -2.8867514
+  - localX: 1
+    localY: -2.8867514
+  - localX: 2
+    localY: -2.8867514
+  - localX: -2
+    localY: -2.3094013
+  - localX: 2
+    localY: -2.3094013
+  - localX: -2.5
+    localY: -2.020726
+  - localX: 2.5
+    localY: -2.020726
+  - localX: -2.5
+    localY: -1.4433757
+  - localX: 2.5
+    localY: -1.4433757
+  - localX: -3
+    localY: -1.1547006
+  - localX: 3
+    localY: -1.1547006
+  - localX: -3
+    localY: -0.5773503
+  - localX: 3
+    localY: -0.5773503
+  - localX: -3.5
+    localY: -0.28867516
+  - localX: 3.5
+    localY: -0.28867516
+  - localX: -3.5
+    localY: 0.28867498
+  - localX: 3.5
+    localY: 0.28867498
+  - localX: -4
+    localY: 0.57734996
+  - localX: 4
+    localY: 0.57734996
+  - localX: -4
+    localY: 1.1546999
+  - localX: 4
+    localY: 1.1546999
+  - localX: -4.5
+    localY: 1.443375
+  - localX: -3.5
+    localY: 1.443375
+  - localX: 3.5
+    localY: 1.443375
+  - localX: 4.5
+    localY: 1.443375
+  - localX: -4.5
+    localY: 2.020726
+  - localX: -3.5
+    localY: 2.020726
+  - localX: 3.5
+    localY: 2.020726
+  - localX: 4.5
+    localY: 2.020726
+  - localX: -4
+    localY: 2.3094008
+  - localX: -3
+    localY: 2.3094008
+  - localX: 3
+    localY: 2.3094008
+  - localX: 4
+    localY: 2.3094008
+  - localX: -4
+    localY: 2.886751
+  - localX: -3
+    localY: 2.886751
+  - localX: 3
+    localY: 2.886751
+  - localX: 4
+    localY: 2.886751
+  - localX: -4.5
+    localY: 3.1754258
+  - localX: -3.5
+    localY: 3.1754258
+  - localX: -2.5
+    localY: 3.1754258
+  - localX: 2.5
+    localY: 3.1754258
+  - localX: 3.5
+    localY: 3.1754258
+  - localX: 4.5
+    localY: 3.1754258
+  - localX: -4.5
+    localY: 3.7527769
+  - localX: -3.5
+    localY: 3.7527769
+  - localX: -2.5
+    localY: 3.7527769
+  - localX: -1.5
+    localY: 3.7527769
+  - localX: -0.5
+    localY: 3.7527769
+  - localX: 0.5
+    localY: 3.7527769
+  - localX: 1.5
+    localY: 3.7527769
+  - localX: 2.5
+    localY: 3.7527769
+  - localX: 3.5
+    localY: 3.7527769
+  - localX: 4.5
+    localY: 3.7527769
+  - localX: -4
+    localY: 4.041452
+  - localX: -3
+    localY: 4.041452
+  - localX: -2
+    localY: 4.041452
+  - localX: -1
+    localY: 4.041452
+  - localX: 0
+    localY: 4.041452
+  - localX: 1
+    localY: 4.041452
+  - localX: 2
+    localY: 4.041452
+  - localX: 3
+    localY: 4.041452
+  - localX: 4
+    localY: 4.041452
+  - localX: -4
+    localY: 4.6188016
+  - localX: -3
+    localY: 4.6188016
+  - localX: -2
+    localY: 4.6188016
+  - localX: -1
+    localY: 4.6188016
+  - localX: 0
+    localY: 4.6188016
+  - localX: 1
+    localY: 4.6188016
+  - localX: 2
+    localY: 4.6188016
+  - localX: 3
+    localY: 4.6188016
+  - localX: 4
+    localY: 4.6188016
+  - localX: -3.5
+    localY: 4.907477
+  - localX: -2.5
+    localY: 4.907477
+  - localX: -1.5
+    localY: 4.907477
+  - localX: -0.5
+    localY: 4.907477
+  - localX: 0.5
+    localY: 4.907477
+  - localX: 1.5
+    localY: 4.907477
+  - localX: 2.5
+    localY: 4.907477
+  - localX: 3.5
+    localY: 4.907477
+  - localX: -2.5
+    localY: 5.4848275
+  - localX: -1.5
+    localY: 5.4848275
+  - localX: -0.5
+    localY: 5.4848275
+  - localX: 0.5
+    localY: 5.4848275
+  - localX: 1.5
+    localY: 5.4848275
+  - localX: 2.5
+    localY: 5.4848275
+  - localX: -2
+    localY: 5.7735023
+  - localX: -1
+    localY: 5.7735023
+  - localX: 0
+    localY: 5.7735023
+  - localX: 1
+    localY: 5.7735023
+  - localX: 2
+    localY: 5.7735023
+  placementExpansion: 1
+  footprintRadius: 1.5
+  footprintRotationDegrees: 0

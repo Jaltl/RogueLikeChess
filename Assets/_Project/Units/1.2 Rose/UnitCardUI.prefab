@@ -140,7 +140,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: -8868803461578586678, guid: 9f59c5e5d9f73a64f828160a2740d246, type: 3}
+  m_Sprite: {fileID: -9166084717782916886, guid: 42c213ffa08918d49ad0a009d4500337, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -163,7 +163,7 @@ GameObject:
   - component: {fileID: 4531823320698962897}
   - component: {fileID: 2098056061994221250}
   m_Layer: 5
-  m_Name: UnitCardUI
+  m_Name: Unit Card - Rose
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -212,14 +212,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6ce0c1ecf96c65840962176695b7d7fc, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitCardUI
-  placementController: {fileID: 0}
   unitDefinition: {fileID: 11400000, guid: 932b774e68b33e64bbd40a9134a6ce33, type: 2}
+  placementController: {fileID: 0}
   button: {fileID: 2098056061994221250}
   iconImage: {fileID: 8314619035899407257}
   nameText: {fileID: 6491664773890510211}
-  powerText: {fileID: 0}
   costText: {fileID: 3781652236540141479}
-  anchorText: {fileID: 0}
+  powerText: {fileID: 0}
+  healthText: {fileID: 0}
 --- !u!114 &2098056061994221250
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -329,7 +329,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Xim
+  m_text: Rose
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -466,7 +466,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: 1
+  m_text: 2
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}

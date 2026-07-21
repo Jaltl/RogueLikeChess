@@ -18,42 +18,43 @@ MonoBehaviour:
   health: 0
   power: 3
   cost: 2
-  anchorType: 1
+  anchorType: 0
   baseSize:
-  - x: -1
-    y: 0
-  - x: -1
-    y: 1
+  - localX: 0
+    localY: 0.57734996
+  - localX: 0
+    localY: 1.1546999
   supportRange:
-  - x: -2
-    y: -1
-  - x: -1
-    y: -1
-  - x: 0
-    y: -1
-  - x: -3
-    y: 0
-  - x: -2
-    y: 0
-  - x: 0
-    y: 0
-  - x: 1
-    y: 0
-  - x: -3
-    y: 1
-  - x: -2
-    y: 1
-  - x: 0
-    y: 1
-  - x: 1
-    y: 1
-  - x: -2
-    y: 2
-  - x: -1
-    y: 2
-  - x: 0
-    y: 2
-  - x: -1
-    y: 3
-  baseSizeDown: []
-  supportRangeDown: []
+  - localX: 0
+    localY: -0.5773503
+  - localX: -0.5
+    localY: -0.28867516
+  - localX: 0.5
+    localY: -0.28867516
+  - localX: -0.5
+    localY: 0.28867498
+  - localX: 0.5
+    localY: 0.28867498
+  - localX: -1
+    localY: 0.57734996
+  - localX: 1
+    localY: 0.57734996
+  - localX: -1
+    localY: 1.1546999
+  - localX: 1
+    localY: 1.1546999
+  - localX: -0.5
+    localY: 1.443375
+  - localX: 0.5
+    localY: 1.443375
+  - localX: -0.5
+    localY: 2.020726
+  - localX: 0.5
+    localY: 2.020726
+  - localX: 0
+    localY: 2.3094008
+  - localX: 0
+    localY: 2.886751
+  placementExpansion: 1
+  footprintRadius: 1.5
+  footprintRotationDegrees: 0
