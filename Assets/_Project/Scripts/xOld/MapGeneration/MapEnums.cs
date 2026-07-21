@@ -56,12 +56,12 @@ public enum MapMirrorMode
     Both
 }
 
-public enum PlayerSide
-{
-    None,
-    White,
-    Black
-}
+// public enum PlayerSide
+// {
+//     None,
+//     White,
+//     Black
+// }
 
 //Map generation
 // public class MapTriangle

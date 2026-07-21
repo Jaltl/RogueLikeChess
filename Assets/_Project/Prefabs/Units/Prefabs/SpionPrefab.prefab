@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 5212077505339327664}
   - component: {fileID: 1463662199662474885}
   m_Layer: 0
-  m_Name: SpionPrefab
+  m_Name: Unit - Spion
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -46,7 +46,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Unit
   definition: {fileID: 11400000, guid: ed1d406efd85cf345be82b099d8c0cda, type: 2}
-  owner: 0
+  spriteRenderer: {fileID: 201349855842637030}
 --- !u!1 &8347351887747215646
 GameObject:
   m_ObjectHideFlags: 0
@@ -128,7 +128,7 @@ SpriteRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 1
   m_MaskInteraction: 0
-  m_Sprite: {fileID: -5036189002550504195, guid: 90fe2b057cd1e964cae5a12d288a45d7, type: 3}
+  m_Sprite: {fileID: 0}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
@@ -136,5 +136,5 @@ SpriteRenderer:
   m_Size: {x: 0.6666667, y: 0.76666665}
   m_AdaptiveModeThreshold: 0.5
   m_SpriteTileMode: 0
-  m_WasSpriteAssigned: 1
+  m_WasSpriteAssigned: 0
   m_SpriteSortPoint: 0

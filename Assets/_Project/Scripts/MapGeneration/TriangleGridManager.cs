@@ -11,7 +11,6 @@ public class TriangleGridManager : MonoBehaviour
     private readonly Dictionary<string, TriangleNode> nodes = new();
 
     public TriangleMapDefinition MapDefinition => mapDefinition;
-
     public IEnumerable<TriangleCell> AllCells => cells.Values;
     public IEnumerable<TriangleNode> AllNodes => nodes.Values;
 
@@ -43,32 +42,93 @@ public class TriangleGridManager : MonoBehaviour
         );
     }
 
-    void ClearGrid()
+    public TriangleCell GetCell(Vector2Int coord)
+    {
+        cells.TryGetValue(coord, out TriangleCell cell);
+        return cell;
+    }
+
+    public TriangleNode FindClosestAnchorNode(
+        Vector3 worldPosition,
+        UnitAnchorType anchorType,
+        float maxDistance
+    )
+    {
+        TriangleNode bestNode = null;
+        float bestDistanceSqr = maxDistance * maxDistance;
+
+        foreach (TriangleNode node in nodes.Values)
+        {
+            if (node == null)
+                continue;
+
+            if (!node.SupportsUnitAnchorType(anchorType))
+                continue;
+
+            if (!NodeHasActiveOwner(node))
+                continue;
+
+            float distanceSqr = (node.worldPosition - worldPosition).sqrMagnitude;
+
+            if (distanceSqr < bestDistanceSqr)
+            {
+                bestDistanceSqr = distanceSqr;
+                bestNode = node;
+            }
+        }
+
+        return bestNode;
+    }
+
+    public TriangleCell FindClosestCellCenter(Vector3 worldPosition, float maxDistance)
+    {
+        TriangleCell bestCell = null;
+        float bestDistanceSqr = maxDistance * maxDistance;
+
+        foreach (TriangleCell cell in cells.Values)
+        {
+            if (cell == null)
+                continue;
+
+            float distanceSqr = (cell.CenterPosition - worldPosition).sqrMagnitude;
+
+            if (distanceSqr < bestDistanceSqr)
+            {
+                bestDistanceSqr = distanceSqr;
+                bestCell = cell;
+            }
+        }
+
+        return bestCell;
+    }
+
+    public void ClearAllNodeVisualStates()
+    {
+        foreach (TriangleNode node in nodes.Values)
+            node.ClearVisualStates();
+    }
+
+    private void ClearGrid()
     {
         cells.Clear();
         nodes.Clear();
     }
 
-    void BuildTriangleCells()
-{
-    for (int row = 0; row < mapDefinition.triangleRows; row++)
+    private void BuildTriangleCells()
     {
-        for (
-            int col = mapDefinition.GeneratedMinColumn;
-            col <= mapDefinition.GeneratedMaxColumn;
-            col++
-        )
+        for (int row = 0; row < mapDefinition.triangleRows; row++)
         {
-            TriangleCell cell = CreateCell(new Vector2Int(col, row));
-            cells[cell.coord] = cell;
+            for (int col = mapDefinition.GeneratedMinColumn; col <= mapDefinition.GeneratedMaxColumn; col++)
+            {
+                TriangleCell cell = CreateCell(new Vector2Int(col, row));
+                cells[cell.coord] = cell;
+            }
         }
     }
-}
 
-    TriangleCell CreateCell(Vector2Int coord)
+    private TriangleCell CreateCell(Vector2Int coord)
     {
         TriangleOrientation orientation = GetOrientation(coord);
-
         Vector3[] cornerPositions = GetCornerPositions(coord, orientation);
 
         TriangleCell cell = new TriangleCell
@@ -92,13 +152,8 @@ public class TriangleGridManager : MonoBehaviour
         cell.sideMidpoints[1] = GetOrCreateNode((cornerPositions[1] + cornerPositions[2]) * 0.5f);
         cell.sideMidpoints[2] = GetOrCreateNode((cornerPositions[2] + cornerPositions[0]) * 0.5f);
 
-        cell.sideMidpoints[0].RegisterUnitAnchorType(UnitAnchorType.SideMidpoint);
-        cell.sideMidpoints[1].RegisterUnitAnchorType(UnitAnchorType.SideMidpoint);
-        cell.sideMidpoints[2].RegisterUnitAnchorType(UnitAnchorType.SideMidpoint);
-
-Vector3 center = (cornerPositions[0] + cornerPositions[1] + cornerPositions[2]) / 3f;
-cell.center = GetOrCreateNode(center);
-cell.center.RegisterUnitAnchorType(UnitAnchorType.TriangleCenter);
+        Vector3 center = (cornerPositions[0] + cornerPositions[1] + cornerPositions[2]) / 3f;
+        cell.center = GetOrCreateNode(center);
 
         foreach (TriangleNode node in cell.AllNodes)
             node.AddOwner(cell);
@@ -106,27 +161,18 @@ cell.center.RegisterUnitAnchorType(UnitAnchorType.TriangleCenter);
         return cell;
     }
 
-    TriangleOrientation GetOrientation(Vector2Int coord)
+    private TriangleOrientation GetOrientation(Vector2Int coord)
     {
-        bool evenColumn = IsEven(coord.x);
+        bool evenColumn = Mathf.Abs(coord.x % 2) == 0;
+        bool isUp = mapDefinition.firstColumnIsUp ? evenColumn : !evenColumn;
 
-        bool isUp = mapDefinition.firstColumnIsUp
-            ? evenColumn
-            : !evenColumn;
-
-        // The top half is a literal phase mirror of the bottom half.
         if (mapDefinition.IsMirroredHalfRow(coord.y))
             isUp = !isUp;
 
         return isUp ? TriangleOrientation.Up : TriangleOrientation.Down;
     }
 
-    bool IsEven(int value)
-    {
-        return Mathf.Abs(value % 2) == 0;
-    }
-
-    Vector3[] GetCornerPositions(Vector2Int coord, TriangleOrientation orientation)
+    private Vector3[] GetCornerPositions(Vector2Int coord, TriangleOrientation orientation)
     {
         float side = mapDefinition.sideLength;
         float halfSide = side * 0.5f;
@@ -156,7 +202,7 @@ cell.center.RegisterUnitAnchorType(UnitAnchorType.TriangleCenter);
         };
     }
 
-    TriangleNode GetOrCreateNode(Vector3 position)
+    private TriangleNode GetOrCreateNode(Vector3 position)
     {
         string key = MakeNodeKey(position);
 
@@ -168,16 +214,15 @@ cell.center.RegisterUnitAnchorType(UnitAnchorType.TriangleCenter);
         return node;
     }
 
-    string MakeNodeKey(Vector3 position)
+    private string MakeNodeKey(Vector3 position)
     {
         int x = Mathf.RoundToInt(position.x * 100000f);
         int y = Mathf.RoundToInt(position.y * 100000f);
         int z = Mathf.RoundToInt(position.z * 100000f);
-
         return $"{x},{y},{z}";
     }
 
-    void ApplyStamps()
+    private void ApplyStamps()
     {
         foreach (TriangleCell cell in cells.Values)
         {
@@ -209,7 +254,7 @@ cell.center.RegisterUnitAnchorType(UnitAnchorType.TriangleCenter);
         }
     }
 
-    void ApplyStampToCell(TriangleMapStamp stamp, TriangleCell cell)
+    private void ApplyStampToCell(TriangleMapStamp stamp, TriangleCell cell)
     {
         MapRegion appliedRegion = stamp.GetRegionForCell(cell, mapDefinition);
 
@@ -217,9 +262,7 @@ cell.center.RegisterUnitAnchorType(UnitAnchorType.TriangleCenter);
         {
             case MapStampMode.Add:
                 cell.isActive = true;
-                cell.region = appliedRegion == MapRegion.None
-                    ? MapRegion.Neutral
-                    : appliedRegion;
+                cell.region = appliedRegion == MapRegion.None ? MapRegion.Neutral : appliedRegion;
                 cell.isBlocked = false;
                 break;
 
@@ -227,9 +270,7 @@ cell.center.RegisterUnitAnchorType(UnitAnchorType.TriangleCenter);
                 if (!cell.isActive)
                     return;
 
-                cell.region = appliedRegion == MapRegion.None
-                    ? MapRegion.Neutral
-                    : appliedRegion;
+                cell.region = appliedRegion == MapRegion.None ? MapRegion.Neutral : appliedRegion;
                 break;
 
             case MapStampMode.Remove:
@@ -248,47 +289,7 @@ cell.center.RegisterUnitAnchorType(UnitAnchorType.TriangleCenter);
         }
     }
 
-    public TriangleCell GetCell(Vector2Int coord)
-    {
-        cells.TryGetValue(coord, out TriangleCell cell);
-        return cell;
-    }
-
-    public void ClearAllNodeVisualStates()
-    {
-        foreach (TriangleNode node in nodes.Values)
-            node.ClearVisualStates();
-    }
-
-    public TriangleNode FindClosestAnchorNode(Vector3 worldPosition, UnitAnchorType anchorType, float maxDistance)
-    {
-        TriangleNode bestNode = null;
-        float bestDistanceSqr = maxDistance * maxDistance;
-
-        foreach (TriangleNode node in AllNodes)
-        {
-            if (node == null)
-                continue;
-
-            if (!node.SupportsUnitAnchorType(anchorType))
-                continue;
-
-            if (!NodeHasActiveOwner(node))
-                continue;
-
-            float distanceSqr = (node.worldPosition - worldPosition).sqrMagnitude;
-
-            if (distanceSqr < bestDistanceSqr)
-            {
-                bestDistanceSqr = distanceSqr;
-                bestNode = node;
-            }
-        }
-
-        return bestNode;
-    }
-
-    bool NodeHasActiveOwner(TriangleNode node)
+    private bool NodeHasActiveOwner(TriangleNode node)
     {
         if (node == null)
             return false;

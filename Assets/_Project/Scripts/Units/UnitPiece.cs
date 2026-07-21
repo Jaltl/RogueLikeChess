@@ -1,31 +1,63 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+public enum PlayerSide
+{
+    White,
+    Black
+}
+
 public class UnitPiece : MonoBehaviour
 {
-    [Header("Runtime Data")]
+    [Header("Runtime Definition")]
     [SerializeField] private UnitDefinition definition;
-    [SerializeField] private PlayerSide owner;
 
+    [Header("Child Sprite")]
+    [SerializeField] private SpriteRenderer spriteRenderer;
+
+    private PlayerSide owner;
     private TriangleNode anchorNode;
     private TriangleCell anchorCell;
-
     private readonly List<TriangleCell> occupiedCells = new();
     private readonly List<TriangleCell> supportCells = new();
 
     public UnitDefinition Definition => definition;
-
+    public PlayerSide Owner => owner;
     public TriangleNode AnchorNode => anchorNode;
     public TriangleCell AnchorCell => anchorCell;
-
     public IReadOnlyList<TriangleCell> OccupiedCells => occupiedCells;
     public IReadOnlyList<TriangleCell> SupportCells => supportCells;
+
+    private bool supportActive;
+
+    public bool SupportActive => supportActive;
+
+    public void SetSupportActive(bool active)
+{
+    supportActive = active;
+}
+
+    private void Reset()
+    {
+        AutoWire();
+    }
+
+    private void OnValidate()
+    {
+        AutoWire();
+        ApplyDefinition();
+    }
+
+    private void Awake()
+    {
+        AutoWire();
+        ApplyDefinition();
+    }
 
     public void Init(UnitDefinition definition, PlayerSide owner, UnitPlacementResult placement)
     {
         this.definition = definition;
         this.owner = owner;
-
         anchorNode = placement.anchorNode;
         anchorCell = placement.anchorCell;
 
@@ -36,32 +68,13 @@ public class UnitPiece : MonoBehaviour
         supportCells.AddRange(placement.supportCells);
 
         if (anchorNode != null)
-            transform.position = anchorNode.worldPosition;
-    }
+        {
+            Vector3 position = anchorNode.worldPosition;
+            position.z = transform.position.z;
+            transform.position = position;
+        }
 
-    public void SetAnchor(TriangleNode node, TriangleCell cell)
-    {
-        anchorNode = node;
-        anchorCell = cell;
-
-        if (anchorNode != null)
-            transform.position = anchorNode.worldPosition;
-    }
-
-    public void SetOccupiedCells(List<TriangleCell> cells)
-    {
-        occupiedCells.Clear();
-
-        if (cells != null)
-            occupiedCells.AddRange(cells);
-    }
-
-    public void SetSupportCells(List<TriangleCell> cells)
-    {
-        supportCells.Clear();
-
-        if (cells != null)
-            supportCells.AddRange(cells);
+        ApplyDefinition();
     }
 
     public void ClearRuntimeCells()
@@ -70,5 +83,24 @@ public class UnitPiece : MonoBehaviour
         anchorCell = null;
         occupiedCells.Clear();
         supportCells.Clear();
+    }
+
+    private void ApplyDefinition()
+    {
+        if (definition == null)
+            return;
+
+        gameObject.name = $"Unit - {definition.DisplayName}";
+
+        if (spriteRenderer != null)
+            spriteRenderer.sprite = definition.unitIcon;
+    }
+
+    private void AutoWire()
+    {
+        if (spriteRenderer != null)
+            return;
+
+        spriteRenderer = GetComponentInChildren<SpriteRenderer>(true);
     }
 }

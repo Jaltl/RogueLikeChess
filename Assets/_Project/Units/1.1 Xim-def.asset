@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1a0430d09a8ad5419b0ed7d40fe2d45, type: 3}
+  m_Name: 1.1 Xim-def
+  m_EditorClassIdentifier: Assembly-CSharp::UnitDefinition
+  unitName: Xim
+  unitIcon: {fileID: -8868803461578586678, guid: 9f59c5e5d9f73a64f828160a2740d246, type: 3}
+  cardIcon: {fileID: -4492507235585056785, guid: 59f38b770403dae4491b9370dff55169, type: 3}
+  unitPrefab: {fileID: 7545805573319722113, guid: 56a596b2d115673449aa9bd9ae5fbdcd, type: 3}
+  power: 3
+  cost: 2
+  anchorType: 0
+  baseSize:
+  - localX: 0
+    localY: 0.57734996
+  - localX: 0
+    localY: 1.1546999
+  supportRange:
+  - localX: 0
+    localY: -0.5773503
+  - localX: -0.5
+    localY: -0.28867516
+  - localX: 0.5
+    localY: -0.28867516
+  - localX: -0.5
+    localY: 0.28867498
+  - localX: 0.5
+    localY: 0.28867498
+  - localX: -1
+    localY: 0.57734996
+  - localX: 1
+    localY: 0.57734996
+  - localX: -1
+    localY: 1.1546999
+  - localX: 1
+    localY: 1.1546999
+  - localX: -0.5
+    localY: 1.443375
+  - localX: 0.5
+    localY: 1.443375
+  - localX: -0.5
+    localY: 2.020726
+  - localX: 0.5
+    localY: 2.020726
+  - localX: 0
+    localY: 2.3094008
+  - localX: 0
+    localY: 2.886751
+  placementExpansion: 1
+  footprintRadius: 1.5
+  footprintRotationDegrees: 0

@@ -4,82 +4,142 @@ using UnityEngine.UI;
 
 public class UnitCardUI : MonoBehaviour
 {
-    [Header("References")]
-    [SerializeField] private TrianglePlacementController placementController;
+    [Header("Only Required Reference")]
     [SerializeField] private UnitDefinition unitDefinition;
 
-    [Header("UI")]
+    [Header("Auto Found")]
     [SerializeField] private Button button;
     [SerializeField] private Image iconImage;
     [SerializeField] private TMP_Text nameText;
-    [SerializeField] private TMP_Text powerText;
     [SerializeField] private TMP_Text costText;
-    [SerializeField] private TMP_Text anchorText;
+    [SerializeField] private TMP_Text powerText;
 
-    private void Awake()
+    private TrianglePlacementController placementController;
+
+    private void Reset()
     {
-        if (button == null)
-            button = GetComponent<Button>();
-
-        if (button != null)
-            button.onClick.AddListener(SelectUnit);
-    }
-
-    private void Start()
-    {
+        AutoWire();
         Refresh();
     }
 
-    public void Initialize(UnitDefinition definition, TrianglePlacementController controller)
+    private void OnValidate()
+    {
+        AutoWire();
+        Refresh();
+    }
+
+    private void Awake()
+    {
+        AutoWire();
+
+        if (button != null)
+        {
+            button.onClick.RemoveListener(SelectUnit);
+            button.onClick.AddListener(SelectUnit);
+        }
+
+        Refresh();
+    }
+
+    private void OnEnable()
+    {
+        placementController = FindFirstObjectByType<TrianglePlacementController>();
+    }
+
+    private void OnDestroy()
+    {
+        placementController = null;
+
+        if (button != null)
+            button.onClick.RemoveListener(SelectUnit);
+    }
+
+    public void SetUnitDefinition(UnitDefinition definition)
     {
         unitDefinition = definition;
-        placementController = controller;
-
         Refresh();
     }
 
     public void SelectUnit()
     {
-        if (placementController == null || unitDefinition == null)
+        if (unitDefinition == null)
+        {
+            Debug.LogWarning($"{name} has no UnitDefinition assigned.");
             return;
+        }
+
+        if (placementController == null)
+            placementController = FindFirstObjectByType<TrianglePlacementController>();
+
+        if (placementController == null)
+        {
+            Debug.LogWarning("No TrianglePlacementController found in scene.");
+            return;
+        }
 
         placementController.SelectUnit(unitDefinition);
     }
 
-    void Refresh()
+    private void Refresh()
     {
         if (unitDefinition == null)
             return;
 
-        if (iconImage != null)
-            iconImage.sprite = unitDefinition.unitIcon;
+        gameObject.name = $"Unit Card - {unitDefinition.DisplayName}";
 
         if (nameText != null)
-            nameText.text = unitDefinition.unitName;
-
-        if (powerText != null)
-            powerText.text = unitDefinition.power.ToString();
+            nameText.text = unitDefinition.DisplayName;
 
         if (costText != null)
             costText.text = unitDefinition.cost.ToString();
 
-        if (anchorText != null)
-            anchorText.text = GetAnchorLabel(unitDefinition.anchorType);
+        if (powerText != null)
+            powerText.text = unitDefinition.power.ToString();
+
+        if (iconImage != null)
+        {
+            iconImage.sprite = unitDefinition.cardIcon;
+            iconImage.enabled = unitDefinition.cardIcon != null;
+        }
     }
 
-    string GetAnchorLabel(UnitAnchorType anchorType)
+    private void AutoWire()
     {
-        switch (anchorType)
+        if (button == null)
+            button = GetComponent<Button>();
+
+        if (placementController == null && Application.isPlaying)
+            placementController = FindFirstObjectByType<TrianglePlacementController>();
+
+        TMP_Text[] texts = GetComponentsInChildren<TMP_Text>(true);
+
+        foreach (TMP_Text text in texts)
         {
-            case UnitAnchorType.Corner:
-                return "Corner";
+            string lower = text.gameObject.name.ToLower();
 
-            case UnitAnchorType.SideMidpoint:
-                return "Side";
+            if (nameText == null && lower.Contains("name"))
+                nameText = text;
+            else if (costText == null && lower.Contains("cost"))
+                costText = text;
+            else if (powerText == null && lower.Contains("power"))
+                powerText = text;
+        }
 
-            case UnitAnchorType.TriangleCenter:
-            default:
-                return "Center";
+        Image[] images = GetComponentsInChildren<Image>(true);
+
+        foreach (Image image in images)
+        {
+            if (image.gameObject == gameObject)
+                continue;
+
+            string lower = image.gameObject.name.ToLower();
+
+            if (iconImage == null &&
+                (lower.Contains("icon") || lower.Contains("portrait") || lower.Contains("art") || lower.Contains("sprite")))
+            {
+                iconImage = image;
+                return;
+            }
         }
     }
 }

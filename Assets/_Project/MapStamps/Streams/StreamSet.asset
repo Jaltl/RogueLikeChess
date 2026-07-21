@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c9c6ded6ee191614bbacbb53fe6f0abc, type: 3}
+  m_Name: StreamSet
+  m_EditorClassIdentifier: Assembly-CSharp::MapStampSetDefinition
+  setName: Stream Set
+  stage: 3
+  stamps:
+  - {fileID: 11400000, guid: 11f69f644cd00e6459d1b77ce3355d51, type: 2}
+  - {fileID: 11400000, guid: c6e0e7c101844cf4abb138124ab0c8df, type: 2}
+  - {fileID: 11400000, guid: 467f70930ab72094983932e9237b6d6e, type: 2}
+  - {fileID: 11400000, guid: 9fc8560cc1d4f8941af9eff68b732f4e, type: 2}

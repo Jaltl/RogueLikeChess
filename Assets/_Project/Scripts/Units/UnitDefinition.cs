@@ -1,119 +1,106 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [CreateAssetMenu(menuName = "Game/Unit Definition")]
 public class UnitDefinition : ScriptableObject
 {
     [Header("Identity")]
     public string unitName;
+
+    [Header("unit icon")]
     public Sprite unitIcon;
+    
+    [Header("card icon")]
+    public Sprite cardIcon;
 
     [Header("Prefab")]
     public UnitPiece unitPrefab;
 
     [Header("Stats")]
-    public int health = 10;
     public int power = 1;
     public int cost = 1;
 
     [Header("Placement")]
-    public UnitAnchorType anchorType = UnitAnchorType.TriangleCenter;
+    public UnitAnchorType anchorType = UnitAnchorType.Corner;
 
-    [Header("Triangle Footprints - Up Anchor")]
+    [Header("Triangle Footprints")]
     public List<TriangleFootprintCell> baseSize = new();
     public List<TriangleFootprintCell> supportRange = new();
 
-    [Header("Triangle Footprints - Down Anchor")]
-    public List<TriangleFootprintCell> baseSizeDown = new();
-    public List<TriangleFootprintCell> supportRangeDown = new();
+    // Legacy fields for old hex scripts. Remove these after deleting the old hex placement scripts.
+    [HideInInspector] public int placementExpansion = 1;
+    [HideInInspector] public float footprintRadius = 1.5f;
+    [HideInInspector] public float footprintRotationDegrees = 0f;
 
-    List<TriangleFootprintCell> CleanFootprint(List<TriangleFootprintCell> source)
+    public string DisplayName
     {
-        HashSet<Vector2Int> unique = new();
-
-        if (source != null)
+        get
         {
-            foreach (TriangleFootprintCell cell in source)
-                unique.Add(cell.Coord);
+            if (!string.IsNullOrWhiteSpace(unitName))
+                return unitName;
+
+            return name;
         }
-
-        List<Vector2Int> sorted = new(unique);
-
-        sorted.Sort((a, b) =>
-        {
-            int yCompare = a.y.CompareTo(b.y);
-            if (yCompare != 0)
-                return yCompare;
-
-            return a.x.CompareTo(b.x);
-        });
-
-        List<TriangleFootprintCell> result = new();
-
-        foreach (Vector2Int coord in sorted)
-            result.Add(new TriangleFootprintCell(coord.x, coord.y));
-
-        return result;
     }
 
-    public IReadOnlyList<TriangleFootprintCell> GetBaseFootprint(
-    TriangleOrientation orientation
-)
+    public IReadOnlyList<TriangleFootprintCell> GetFootprint(UnitFootprintArea area)
     {
-        if (orientation == TriangleOrientation.Down && baseSizeDown.Count > 0)
-            return baseSizeDown;
-
-        return baseSize;
-    }
-
-    public IReadOnlyList<TriangleFootprintCell> GetSupportFootprint(
-        TriangleOrientation orientation
-    )
-    {
-        if (orientation == TriangleOrientation.Down && supportRangeDown.Count > 0)
-            return supportRangeDown;
-
-        return supportRange;
-    }
-
-    public List<TriangleFootprintCell> GetEditableFootprint(
-    UnitFootprintArea area,
-    TriangleOrientation orientation
-)
-    {
-        if (orientation == TriangleOrientation.Down)
-        {
-            return area == UnitFootprintArea.BaseSize
-                ? baseSizeDown
-                : supportRangeDown;
-        }
-
         return area == UnitFootprintArea.BaseSize
             ? baseSize
             : supportRange;
     }
 
-    public void SetFootprint(
-        UnitFootprintArea area,
-        TriangleOrientation orientation,
-        List<TriangleFootprintCell> footprint
-    )
+    public List<TriangleFootprintCell> GetMutableFootprint(UnitFootprintArea area)
     {
-        List<TriangleFootprintCell> cleaned = CleanFootprint(footprint);
+        return area == UnitFootprintArea.BaseSize
+            ? baseSize
+            : supportRange;
+    }
 
-        if (orientation == TriangleOrientation.Down)
-        {
-            if (area == UnitFootprintArea.BaseSize)
-                baseSizeDown = cleaned;
-            else
-                supportRangeDown = cleaned;
-        }
+    public void SetFootprint(UnitFootprintArea area, List<TriangleFootprintCell> footprint)
+    {
+        if (area == UnitFootprintArea.BaseSize)
+            baseSize = CleanFootprint(footprint);
         else
+            supportRange = CleanFootprint(footprint);
+
+        anchorType = UnitAnchorType.Corner;
+    }
+
+    private List<TriangleFootprintCell> CleanFootprint(List<TriangleFootprintCell> source)
+    {
+        List<TriangleFootprintCell> result = new();
+
+        if (source == null)
+            return result;
+
+        HashSet<string> used = new();
+
+        foreach (TriangleFootprintCell cell in source)
         {
-            if (area == UnitFootprintArea.BaseSize)
-                baseSize = cleaned;
-            else
-                supportRange = cleaned;
+            int roundedX = Mathf.RoundToInt(cell.localX * 10000f);
+            int roundedY = Mathf.RoundToInt(cell.localY * 10000f);
+            string key = $"{roundedX},{roundedY}";
+
+            if (used.Add(key))
+                result.Add(cell);
         }
+
+        result.Sort((a, b) =>
+        {
+            int yCompare = a.localY.CompareTo(b.localY);
+            if (yCompare != 0)
+                return yCompare;
+
+            return a.localX.CompareTo(b.localX);
+        });
+
+        return result;
+    }
+
+    private void OnValidate()
+    {
+        anchorType = UnitAnchorType.Corner;
     }
 }

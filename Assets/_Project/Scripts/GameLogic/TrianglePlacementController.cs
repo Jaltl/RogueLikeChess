@@ -19,6 +19,18 @@ public class TrianglePlacementController : MonoBehaviour
     [SerializeField] private InputActionReference placeAction;
     [SerializeField] private InputActionReference cancelAction;
 
+    [Header("Unit Rotation")]
+    [SerializeField] private InputActionReference rotateFootprintAction;
+
+    [SerializeField] private InputActionReference rotateUP;
+    [SerializeField] private InputActionReference rotateUpRight;
+    [SerializeField] private InputActionReference rotateBottomRight;
+    [SerializeField] private InputActionReference rotateBottom;
+    [SerializeField] private InputActionReference rotateBottomLeft;
+    [SerializeField] private InputActionReference rotateUpLeft;
+
+private UnitFootprintFacing currentFacing = UnitFootprintFacing.Up;
+
     [Header("Placement")]
     [SerializeField] private float snapDistanceMultiplier = 1.2f;
     [SerializeField] private bool ignorePointerOverUi = true;
@@ -48,6 +60,10 @@ public class TrianglePlacementController : MonoBehaviour
 
     private readonly HashSet<TriangleCell> currentPlacementZoneCache = new();
 
+    private readonly HashSet<TriangleNode> controlledAreaCornerNodes = new();
+
+    private readonly HashSet<TriangleCell> controlledAreaCache = new();
+
     private UnitPlacementResult currentPreview;
     private bool currentPreviewIsValid;
 
@@ -56,6 +72,8 @@ public class TrianglePlacementController : MonoBehaviour
 
     private bool placeRequested;
     private bool cancelRequested;
+
+    private bool isRebuildingPlacementVisuals;
 
     float MaxSnapDistance
     {
@@ -91,20 +109,34 @@ public class TrianglePlacementController : MonoBehaviour
         RegisterInputActions(false);
     }
 
-   private void Update()
+    private void Update()
     {
         UpdatePreviewFromPointer();
 
-        if (placeRequested)
+        bool consumePlace = placeRequested;
+        bool consumeCancel = cancelRequested;
+
+        placeRequested = false;
+        cancelRequested = false;
+
+        // Right click / cancel has priority.
+        if (consumeCancel)
         {
-            placeRequested = false;
-            TryPlaceSelectedUnit();
+            if (selectedUnit != null)
+            {
+                ClearSelectedUnit();
+            }
+            else
+            {
+                TryKillHoveredUnitForDebug();
+            }
+
+            return;
         }
 
-        if (cancelRequested)
+        if (consumePlace)
         {
-            cancelRequested = false;
-            ClearSelectedUnit();
+            TryPlaceSelectedUnit();
         }
     }
 
@@ -112,6 +144,14 @@ public class TrianglePlacementController : MonoBehaviour
     {
         RegisterAction(placeAction, OnPlaceInput, register);
         RegisterAction(cancelAction, OnCancelInput, register);
+        RegisterAction(rotateFootprintAction, OnRotateFootprintInput, register);
+
+    RegisterAction(rotateUP, OnFacingUpInput, register);
+    RegisterAction(rotateUpRight, OnFacingUpRightInput, register);
+    RegisterAction(rotateBottomRight, OnFacingDownRightInput, register);
+    RegisterAction(rotateBottom, OnFacingDownInput, register);
+    RegisterAction(rotateBottomLeft, OnFacingDownLeftInput, register);
+    RegisterAction(rotateUpLeft, OnFacingUpLeftInput, register);
 
         if (pointerPositionAction != null && pointerPositionAction.action != null)
         {
@@ -124,32 +164,25 @@ public class TrianglePlacementController : MonoBehaviour
     }
 
     void RegisterAction(
-        InputActionReference actionReference,
-        System.Action<InputAction.CallbackContext> callback,
-        bool register
-    )
+    InputActionReference actionReference,
+    System.Action<InputAction.CallbackContext> callback,
+    bool register
+)
+{
+    if (actionReference == null || actionReference.action == null)
+        return;
+
+    if (register)
     {
-        if (actionReference == null || actionReference.action == null)
-            return;
-
-        InputAction action = actionReference.action;
-
-        if (register)
-        {
-            action.performed += callback;
-
-            if (enableActionsManually)
-                action.Enable();
-        }
-        else
-        {
-            action.performed -= callback;
-
-            if (enableActionsManually)
-                action.Disable();
-        }
+        actionReference.action.performed += callback;
+        actionReference.action.Enable();
     }
-
+    else
+    {
+        actionReference.action.performed -= callback;
+        actionReference.action.Disable();
+    }
+}
     void OnPlaceInput(InputAction.CallbackContext context)
     {
         Debug.Log("Place input received.");
@@ -197,6 +230,7 @@ public class TrianglePlacementController : MonoBehaviour
     public void SelectUnit(UnitDefinition unit)
     {
         selectedUnit = unit;
+        currentFacing = UnitFootprintFacing.Up;
 
         if (selectedUnit != null)
             Debug.Log($"Selected unit: {selectedUnit.unitName}");
@@ -241,9 +275,9 @@ public class TrianglePlacementController : MonoBehaviour
         {
             currentPreview = null;
             currentPreviewIsValid = false;
+            HideAnchorMarker();
 
-            ClearPreview();
-            ShowCurrentPlacementZone();
+            RebuildPlacementVisuals();
 
             DebugPreview("Pointer is over UI, preview blocked.");
             return;
@@ -251,12 +285,11 @@ public class TrianglePlacementController : MonoBehaviour
 
         Vector3 pointerWorld = GetPointerWorldPosition();
 
-        ClearPreview();
-
         bool hasGeometryPreview = UnitFootprintResolver.TryResolvePlacementFromWorld(
             grid,
             selectedUnit,
             pointerWorld,
+            currentFacing,
             MaxSnapDistance,
             out currentPreview,
             null
@@ -264,10 +297,11 @@ public class TrianglePlacementController : MonoBehaviour
 
         if (!hasGeometryPreview || currentPreview == null)
         {
+            currentPreview = null;
             currentPreviewIsValid = false;
+            HideAnchorMarker();
 
-            ShowCurrentPlacementZone();
-            RefreshVisuals();
+            RebuildPlacementVisuals();
 
             DebugPreview(
                 $"No geometry preview. Mouse world: {pointerWorld}, " +
@@ -279,29 +313,9 @@ public class TrianglePlacementController : MonoBehaviour
 
         currentPreviewIsValid = CanPlaceUnit(selectedUnit, currentPreview);
 
-        if (currentPreviewIsValid)
-        {
-            ShowValidPreview(currentPreview);
-            UpdateAnchorMarker(currentPreview, true);
-        }
-        else
-        {
-            ShowInvalidPreview(currentPreview);
-            UpdateAnchorMarker(currentPreview, false);
-        }
+        UpdateAnchorMarker(currentPreview, currentPreviewIsValid);
 
-        if (!hasGeometryPreview || currentPreview == null)
-        {
-            currentPreviewIsValid = false;
-
-            HideAnchorMarker();
-            ShowCurrentPlacementZone();
-            RefreshVisuals();
-
-            return;
-        }
-
-        RefreshVisuals();
+        RebuildPlacementVisuals();
     }
 
     void DebugPreview(string message)
@@ -313,7 +327,7 @@ public class TrianglePlacementController : MonoBehaviour
         Debug.Log($"[Placement Preview] {message}");
     }
 
-    void ShowInvalidPreview(UnitPlacementResult placement)
+    private void ShowInvalidPreview(UnitPlacementResult placement)
     {
         if (placement == null)
             return;
@@ -331,11 +345,11 @@ public class TrianglePlacementController : MonoBehaviour
             if (baseCell == null)
                 continue;
 
-            baseCell.SetWholeVisualState(TriangleNodeVisualState.Invalid, true);
+            baseCell.SetWholeVisualState(TriangleNodeVisualState.PreviewInvalid, true);
         }
 
         if (placement.anchorNode != null)
-            placement.anchorNode.SetState(TriangleNodeVisualState.Invalid, true);
+            placement.anchorNode.SetState(TriangleNodeVisualState.PreviewInvalid, true);
     }
 
     bool IsBaseCellValidForCurrentPlayer(TriangleCell cell)
@@ -358,78 +372,364 @@ public class TrianglePlacementController : MonoBehaviour
         return true;
     }
 
-    public bool CanPlaceUnit(UnitDefinition unitDef, UnitPlacementResult placement)
+    private bool CanPlaceUnit(UnitDefinition unitDef, UnitPlacementResult placement)
     {
         if (unitDef == null || placement == null)
             return false;
 
-        foreach (TriangleCell cell in placement.baseCells)
+        if (placement.baseCells == null || placement.baseCells.Count == 0)
+            return false;
+
+        foreach (TriangleCell baseCell in placement.baseCells)
         {
-            if (!IsBaseCellValidForCurrentPlayer(cell))
+            if (!IsBaseCellTerrainValid(baseCell))
                 return false;
         }
+
+        return BaseTouchesOrOverlapsActiveControlledArea(
+            placement.baseCells,
+            currentPlayer
+        );
+    }
+
+    private bool IsBaseCellTerrainValid(TriangleCell cell)
+    {
+        if (cell == null)
+            return false;
+
+        if (!cell.isActive)
+            return false;
+
+        if (cell.isBlocked)
+            return false;
+
+        // Later, when terrain flags are active:
+        // if (cell.BlocksPlacement)
+        //     return false;
+
+        // Existing unit bodies block placement.
+        if (board != null && board.IsCellOccupied(cell))
+            return false;
 
         return true;
     }
 
+    private bool PlacementTouchesOrOverlapsControlledArea(UnitPlacementResult placement)
+    {
+        HashSet<TriangleCell> controlledArea = GetCurrentPlacementZone();
+
+        if (controlledArea == null || controlledArea.Count == 0)
+            return false;
+
+        // Overlap is allowed and counts as connected.
+        foreach (TriangleCell baseCell in placement.baseCells)
+        {
+            if (baseCell == null)
+                continue;
+
+            if (controlledArea.Contains(baseCell))
+                return true;
+        }
+
+        // Touching by corner or edge also counts as connected.
+        return FootprintTouchesControlledArea(placement.baseCells, controlledArea);
+    }
+
+    private bool BaseTouchesOrOverlapsActiveControlledArea(
+    IReadOnlyList<TriangleCell> baseCells,
+    PlayerSide side
+)
+    {
+        HashSet<TriangleCell> controlledArea = GetActiveControlledArea(side);
+
+        if (controlledArea == null || controlledArea.Count == 0)
+            return false;
+
+        return CellsTouchOrOverlapCellSet(baseCells, controlledArea);
+    }
+
+    private bool CellsTouchOrOverlapCellSet(
+    IReadOnlyList<TriangleCell> sourceCells,
+    HashSet<TriangleCell> targetCells
+)
+    {
+        if (sourceCells == null || targetCells == null || targetCells.Count == 0)
+            return false;
+
+        // Overlap counts.
+        foreach (TriangleCell sourceCell in sourceCells)
+        {
+            if (sourceCell == null)
+                continue;
+
+            if (targetCells.Contains(sourceCell))
+                return true;
+        }
+
+        // Corner/edge touch counts.
+        HashSet<TriangleNode> targetCorners = new();
+
+        foreach (TriangleCell targetCell in targetCells)
+        {
+            if (targetCell == null || targetCell.corners == null)
+                continue;
+
+            foreach (TriangleNode corner in targetCell.corners)
+            {
+                if (corner != null)
+                    targetCorners.Add(corner);
+            }
+        }
+
+        foreach (TriangleCell sourceCell in sourceCells)
+        {
+            if (sourceCell == null || sourceCell.corners == null)
+                continue;
+
+            foreach (TriangleNode corner in sourceCell.corners)
+            {
+                if (corner != null && targetCorners.Contains(corner))
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void RecalculateSupportNetwork(PlayerSide side)
+    {
+        if (board == null || grid == null)
+            return;
+
+        List<UnitPiece> sideUnits = new();
+
+        foreach (UnitPiece unit in board.Units)
+        {
+            if (unit == null)
+                continue;
+
+            if (unit.Owner != side)
+                continue;
+
+            unit.SetSupportActive(false);
+            sideUnits.Add(unit);
+        }
+
+        HashSet<TriangleCell> startArea = new();
+        AddStartAreaCells(side, startArea);
+
+        HashSet<UnitPiece> connectedUnits = new();
+        Queue<UnitPiece> queue = new();
+
+        // Seed units: their BASE touches/overlaps the START AREA.
+        foreach (UnitPiece unit in sideUnits)
+        {
+            if (CellsTouchOrOverlapCellSet(unit.OccupiedCells, startArea))
+            {
+                connectedUnits.Add(unit);
+                queue.Enqueue(unit);
+                unit.SetSupportActive(true);
+            }
+        }
+
+        // Chain units: their BASE touches/overlaps CONNECTED support.
+        while (queue.Count > 0)
+        {
+            UnitPiece connectedUnit = queue.Dequeue();
+
+            HashSet<TriangleCell> connectedSupport = new();
+
+            foreach (TriangleCell supportCell in connectedUnit.SupportCells)
+            {
+                if (supportCell == null)
+                    continue;
+
+                if (!supportCell.isActive)
+                    continue;
+
+                if (supportCell.isBlocked)
+                    continue;
+
+                connectedSupport.Add(supportCell);
+            }
+
+            foreach (UnitPiece candidate in sideUnits)
+            {
+                if (candidate == null)
+                    continue;
+
+                if (connectedUnits.Contains(candidate))
+                    continue;
+
+                if (CellsTouchOrOverlapCellSet(candidate.OccupiedCells, connectedSupport))
+                {
+                    connectedUnits.Add(candidate);
+                    queue.Enqueue(candidate);
+                    candidate.SetSupportActive(true);
+                }
+            }
+        }
+
+        Debug.Log(
+            $"{side} support network: {connectedUnits.Count}/{sideUnits.Count} units connected."
+        );
+    }
+
+    private bool FootprintTouchesControlledArea(
+    IReadOnlyList<TriangleCell> footprintCells,
+    HashSet<TriangleCell> controlledArea
+)
+    {
+        controlledAreaCornerNodes.Clear();
+
+        foreach (TriangleCell controlledCell in controlledArea)
+        {
+            if (controlledCell == null)
+                continue;
+
+            if (!controlledCell.isActive)
+                continue;
+
+            foreach (TriangleNode corner in controlledCell.corners)
+            {
+                if (corner != null)
+                    controlledAreaCornerNodes.Add(corner);
+            }
+        }
+
+        foreach (TriangleCell footprintCell in footprintCells)
+        {
+            if (footprintCell == null)
+                continue;
+
+            foreach (TriangleNode corner in footprintCell.corners)
+            {
+                if (corner != null && controlledAreaCornerNodes.Contains(corner))
+                    return true;
+            }
+        }
+
+        return false;
+    }
+
+    private HashSet<TriangleCell> GetActiveControlledArea(PlayerSide side)
+    {
+        controlledAreaCache.Clear();
+
+        AddStartAreaCells(side, controlledAreaCache);
+
+        if (board == null)
+            return controlledAreaCache;
+
+        foreach (UnitPiece unit in board.Units)
+        {
+            if (unit == null)
+                continue;
+
+            if (unit.Owner != side)
+                continue;
+
+            if (!unit.SupportActive)
+                continue;
+
+            foreach (TriangleCell supportCell in unit.SupportCells)
+            {
+                if (supportCell == null)
+                    continue;
+
+                if (!supportCell.isActive)
+                    continue;
+
+                if (supportCell.isBlocked)
+                    continue;
+
+                controlledAreaCache.Add(supportCell);
+            }
+        }
+
+        return controlledAreaCache;
+    }
+
+    private void AddStartAreaCells(
+    PlayerSide side,
+    HashSet<TriangleCell> target
+)
+    {
+        if (grid == null || target == null)
+            return;
+
+        MapRegion startRegion = side == PlayerSide.White
+            ? MapRegion.WhiteStart
+            : MapRegion.BlackStart;
+
+        foreach (TriangleCell cell in grid.AllCells)
+        {
+            if (cell == null)
+                continue;
+
+            if (!cell.isActive)
+                continue;
+
+            if (cell.region == startRegion)
+                target.Add(cell);
+        }
+    }
+
     public void TryPlaceSelectedUnit()
     {
-        Debug.Log(
-        $"TryPlaceSelectedUnit | " +
-        $"selectedUnit: {(selectedUnit == null ? "null" : selectedUnit.unitName)} | " +
-        $"preview valid: {currentPreviewIsValid} | " +
-        $"preview null: {currentPreview == null}");
         if (selectedUnit == null)
             return;
 
         if (ignorePointerOverUi && IsPointerOverUi())
             return;
 
-        if (!currentPreviewIsValid || currentPreview == null)
+        if (currentPreview == null || !currentPreviewIsValid)
+        {
+            Debug.Log("Placement blocked: no valid preview.");
             return;
-
-        if (!CanPlaceUnit(selectedUnit, currentPreview))
-            return;
+        }
 
         UnitDefinition unitToPlace = selectedUnit;
 
-        UnitPiece prefab = unitToPlace.unitPrefab;
-
-        if (prefab == null)
+        if (unitToPlace.unitPrefab == null)
         {
-            Debug.LogError($"{unitToPlace.name} has no UnitPiece prefab assigned.");
+            Debug.LogWarning($"{unitToPlace.name} has no unit prefab assigned.");
             return;
         }
 
         UnitPiece unit = Instantiate(
-            prefab,
+            unitToPlace.unitPrefab,
             currentPreview.AnchorWorldPosition,
             Quaternion.identity,
             unitRoot
         );
 
-        unit.Init(unitToPlace, currentPlayer, currentPreview);
+        unit.Init(
+            unitToPlace,
+            currentPlayer,
+            currentPreview
+        );
 
         if (board != null)
             board.PlaceUnit(unit, currentPreview);
 
-        ExpandPlacementZoneFromSupportCells(
-            currentPreview.supportCells,
-            currentPlayer
-        );
+        UnitFootprintFacing placedFacing = currentPreview.facing;
 
-        Debug.Log($"{currentPlayer} placed {unitToPlace.unitName} at {currentPreview.anchorCell.coord}");
+        RecalculateSupportNetwork(currentPlayer);
 
-        selectedUnit = null;
         currentPreview = null;
         currentPreviewIsValid = false;
+        HideAnchorMarker();
 
-        ClearPreview();
-        ShowCurrentPlacementZone();
+        RebuildPlacementVisuals();
+
+        Debug.Log(
+            $"Placed {unitToPlace.DisplayName} for {currentPlayer}. Facing: {placedFacing}"
+        );
     }
 
-    void ExpandPlacementZoneFromSupportCells(
-    List<TriangleCell> supportCells,
+    private void ExpandPlacementZoneFromSupportCells(
+    IReadOnlyList<TriangleCell> supportCells,
     PlayerSide side
 )
     {
@@ -452,47 +752,43 @@ public class TrianglePlacementController : MonoBehaviour
         }
     }
 
-    void ShowCurrentPlacementZone()
+    private void ShowCurrentPlacementZone()
     {
-        ClearPreview();
-
-        foreach (TriangleCell cell in GetCurrentPlacementZone())
-        {
-            if (cell == null || !cell.isActive)
-                continue;
-
-            cell.SetWholeVisualState(TriangleNodeVisualState.Placement, true);
-        }
-
-        RefreshVisuals();
+        RebuildPlacementVisuals();
     }
 
-    void ShowValidPreview(UnitPlacementResult placement)
+    private void ShowValidPreview(UnitPlacementResult placement)
     {
-        foreach (TriangleCell cell in placement.supportCells)
+        if (placement == null)
+            return;
+
+        foreach (TriangleCell supportCell in placement.supportCells)
         {
-            if (cell == null)
+            if (supportCell == null)
                 continue;
 
-            cell.SetWholeVisualState(TriangleNodeVisualState.Hover, true);
+            supportCell.SetWholeVisualState(TriangleNodeVisualState.Hover, true);
         }
 
-        foreach (TriangleCell cell in placement.baseCells)
+        foreach (TriangleCell baseCell in placement.baseCells)
         {
-            if (cell == null)
+            if (baseCell == null)
                 continue;
 
-            cell.SetWholeVisualState(TriangleNodeVisualState.Footprint, true);
+            baseCell.SetWholeVisualState(TriangleNodeVisualState.PreviewValid, true);
         }
 
         if (placement.anchorNode != null)
-            placement.anchorNode.SetState(TriangleNodeVisualState.Placement, true);
+            placement.anchorNode.SetState(TriangleNodeVisualState.PreviewValid, true);
     }
 
     void ClearPreview()
     {
-        if (grid != null)
-            grid.ClearAllNodeVisualStates();
+        currentPreview = null;
+        currentPreviewIsValid = false;
+        HideAnchorMarker();
+
+        RebuildPlacementVisuals();
     }
 
     void RefreshVisuals()
@@ -501,9 +797,9 @@ public class TrianglePlacementController : MonoBehaviour
             lineRenderer.RefreshLineColors();
     }
 
-    HashSet<TriangleCell> GetCurrentPlacementZone()
+    private HashSet<TriangleCell> GetCurrentPlacementZone()
     {
-        return BuildPlacementZoneForSide(currentPlayer);
+        return GetActiveControlledArea(currentPlayer);
     }
 
     HashSet<TriangleCell> BuildPlacementZoneForSide(PlayerSide side)
@@ -610,8 +906,7 @@ public class TrianglePlacementController : MonoBehaviour
 
     bool IsPointerOverUi()
     {
-        return EventSystem.current != null &&
-               EventSystem.current.IsPointerOverGameObject();
+        return EventSystem.current != null && EventSystem.current.IsPointerOverGameObject();
     }
 
     void UpdateAnchorMarker(UnitPlacementResult placement, bool isValid)
@@ -678,4 +973,254 @@ public class TrianglePlacementController : MonoBehaviour
 
         anchorMarkerObject.SetActive(false);
     }
+
+   void OnRotateFootprintInput(InputAction.CallbackContext context)
+{
+    Vector2 scroll = context.ReadValue<Vector2>();
+
+    if (scroll.y > 0f)
+        RotateFootprint(1);
+    else if (scroll.y < 0f)
+        RotateFootprint(-1);
+}
+
+void OnFacingUpInput(InputAction.CallbackContext context)
+{
+    SetFootprintFacing(UnitFootprintFacing.Up);
+}
+
+void OnFacingUpRightInput(InputAction.CallbackContext context)
+{
+    SetFootprintFacing(UnitFootprintFacing.UpRight);
+}
+
+void OnFacingDownRightInput(InputAction.CallbackContext context)
+{
+    SetFootprintFacing(UnitFootprintFacing.DownRight);
+}
+
+void OnFacingDownInput(InputAction.CallbackContext context)
+{
+    SetFootprintFacing(UnitFootprintFacing.Down);
+}
+
+void OnFacingDownLeftInput(InputAction.CallbackContext context)
+{
+    SetFootprintFacing(UnitFootprintFacing.DownLeft);
+}
+
+void OnFacingUpLeftInput(InputAction.CallbackContext context)
+{
+    SetFootprintFacing(UnitFootprintFacing.UpLeft);
+}
+
+void RotateFootprint(int direction)
+{
+    int value = (int)currentFacing;
+    value += direction;
+
+    if (value < 0)
+        value = 5;
+
+    if (value > 5)
+        value = 0;
+
+    SetFootprintFacing((UnitFootprintFacing)value);
+}
+
+void SetFootprintFacing(UnitFootprintFacing facing)
+{
+    if (currentFacing == facing)
+        return;
+
+    currentFacing = facing;
+
+    Debug.Log($"Footprint facing: {currentFacing}");
+
+    if (selectedUnit != null)
+        UpdatePreviewFromPointer();
+}
+
+    public void KillUnit(UnitPiece unit)
+    {
+        if (unit == null)
+            return;
+
+        PlayerSide owner = unit.Owner;
+
+        if (board != null)
+            board.RemoveUnit(unit);
+
+        Destroy(unit.gameObject);
+
+        RecalculateSupportNetwork(owner);
+
+        currentPreview = null;
+        currentPreviewIsValid = false;
+        HideAnchorMarker();
+
+        RebuildPlacementVisuals();
+    }
+
+    private void ShowControlAreaVisuals()
+    {
+        if (grid == null)
+            return;
+
+        ShowStartAreaVisuals(currentPlayer);
+        ShowSupportVisuals(currentPlayer);
+    }
+
+    private void ShowStartAreaVisuals(PlayerSide side)
+    {
+        MapRegion startRegion = side == PlayerSide.White
+            ? MapRegion.WhiteStart
+            : MapRegion.BlackStart;
+
+        TriangleNodeVisualState state = side == PlayerSide.White
+            ? TriangleNodeVisualState.WhiteStartArea
+            : TriangleNodeVisualState.BlackStartArea;
+
+        foreach (TriangleCell cell in grid.AllCells)
+        {
+            if (cell == null)
+                continue;
+
+            if (!cell.isActive)
+                continue;
+
+            if (cell.region != startRegion)
+                continue;
+
+            cell.SetWholeVisualState(state, true);
+        }
+    }
+
+    private void ShowSupportVisuals(PlayerSide side)
+    {
+        if (board == null)
+            return;
+
+        foreach (UnitPiece unit in board.Units)
+        {
+            if (unit == null)
+                continue;
+
+            if (unit.Owner != side)
+                continue;
+
+            TriangleNodeVisualState state = unit.SupportActive
+                ? TriangleNodeVisualState.ActiveSupport
+                : TriangleNodeVisualState.DisabledSupport;
+
+            foreach (TriangleCell supportCell in unit.SupportCells)
+            {
+                if (supportCell == null)
+                    continue;
+
+                if (!supportCell.isActive)
+                    continue;
+
+                if (supportCell.isBlocked)
+                    continue;
+
+                supportCell.SetWholeVisualState(state, true);
+            }
+        }
+    }
+
+    private void ShowUnitBaseVisuals()
+    {
+        if (board == null)
+            return;
+
+        foreach (UnitPiece unit in board.Units)
+        {
+            if (unit == null)
+                continue;
+
+            foreach (TriangleCell baseCell in unit.OccupiedCells)
+            {
+                if (baseCell == null)
+                    continue;
+
+                baseCell.SetWholeVisualState(TriangleNodeVisualState.UnitBase, true);
+            }
+        }
+    }
+
+    private void RebuildPlacementVisuals()
+    {
+        if (isRebuildingPlacementVisuals)
+            return;
+
+        isRebuildingPlacementVisuals = true;
+
+        if (grid == null)
+        {
+            isRebuildingPlacementVisuals = false;
+            return;
+        }
+
+        grid.ClearAllNodeVisualStates();
+
+        ShowStartAreaVisuals(currentPlayer);
+        ShowSupportVisuals(currentPlayer);
+        ShowUnitBaseVisuals();
+
+        if (currentPreview != null)
+        {
+            if (currentPreviewIsValid)
+                ShowValidPreview(currentPreview);
+            else
+                ShowInvalidPreview(currentPreview);
+        }
+
+        RefreshVisuals();
+
+        isRebuildingPlacementVisuals = false;
+    }
+
+    private bool TryGetHoveredUnit(out UnitPiece hoveredUnit)
+{
+    hoveredUnit = null;
+
+    if (board == null || grid == null)
+        return false;
+
+    if (ignorePointerOverUi && IsPointerOverUi())
+        return false;
+
+    Vector3 pointerWorld = GetPointerWorldPosition();
+
+    float cellSnapDistance = 0.25f;
+
+    if (grid.MapDefinition != null)
+        cellSnapDistance = grid.MapDefinition.sideLength * 0.6f;
+
+    TriangleCell hoveredCell = grid.FindClosestCellCenter(
+        pointerWorld,
+        cellSnapDistance
+    );
+
+    if (hoveredCell == null)
+        return false;
+
+    hoveredUnit = board.GetUnit(hoveredCell);
+
+    return hoveredUnit != null;
+}
+
+private void TryKillHoveredUnitForDebug()
+{
+    if (!TryGetHoveredUnit(out UnitPiece hoveredUnit))
+    {
+        Debug.Log("No unit under pointer to kill.");
+        return;
+    }
+
+    Debug.Log($"Debug killing hovered unit: {hoveredUnit.name}");
+
+    KillUnit(hoveredUnit);
+}
 }

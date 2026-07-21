@@ -32,6 +32,69 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": true
+                },
+                {
+                    "name": "MouseScroll",
+                    "type": "Value",
+                    "id": "18f0e98a-2ff5-4221-85f1-33f8f3352dff",
+                    "expectedControlType": "Vector2",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": true
+                },
+                {
+                    "name": "RotateUp",
+                    "type": "Button",
+                    "id": "4f8da2d5-dd93-43ec-8248-211ea808c316",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "Press",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "RotateUpRight",
+                    "type": "Button",
+                    "id": "ef0a6434-cec7-4c01-9045-6d7df22d5f6b",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "Press",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "RotateDownRight",
+                    "type": "Button",
+                    "id": "490da8d3-a2e7-4c30-b469-d1780e8a1fc0",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "Press",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "RotateDown",
+                    "type": "Button",
+                    "id": "2e4cce53-4489-4371-863f-d1279a5e265f",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "Press",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "RotateDownLeft",
+                    "type": "Button",
+                    "id": "339d29b8-00c9-4dec-8d7c-99a3406779bc",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "Press",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "RotateUpLeft",
+                    "type": "Button",
+                    "id": "6c4dc3ea-cfe4-48c1-912e-a0dff744dad0",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "Press",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -67,6 +130,83 @@
                     "action": "MousePosition",
                     "isComposite": false,
                     "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "a2748885-4d0a-473b-8f51-2ad248bbffd9",
+                    "path": "<Mouse>/scroll",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Keyboard&Mouse",
+                    "action": "MouseScroll",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "8e49d560-0ce6-4788-b7fe-4228910fa6d4",
+                    "path": "<Keyboard>/1",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "RotateUp",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "1bde410a-0e5d-4c28-a3ae-a71bacf48c3d",
+                    "path": "<Keyboard>/2",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "RotateUpRight",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "02cec8ca-5ffc-4b7a-b789-e9f94a8feb2e",
+                    "path": "<Keyboard>/3",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "RotateDownRight",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "d5bed6d9-84e5-428f-82c2-8b4b32bfbae1",
+                    "path": "<Keyboard>/4",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "RotateDown",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "b96a4611-0d1c-4abe-af5b-81052d5608c6",
+                    "path": "<Keyboard>/5",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "RotateDownLeft",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "1cd837d2-345e-405c-b93a-7d27f2e23a4b",
+                    "path": "<Keyboard>/6",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "RotateUpLeft",
+                    "isComposite": false,
+                    "isPartOfComposite": false
                 }
             ]
         },
@@ -74,42 +214,6 @@
             "name": "UnitBuilder",
             "id": "510ed58d-5dbb-4e0f-9e5e-b8a808992827",
             "actions": [
-                {
-                    "name": "CenterAnchor",
-                    "type": "Button",
-                    "id": "1ab0937b-9bfd-46f2-a60c-affe952c1a14",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "Press",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "CornerAnchor",
-                    "type": "Button",
-                    "id": "9503f5b5-a70c-4562-821c-7da7e44968cc",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "Press",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "SideAnchor",
-                    "type": "Button",
-                    "id": "92be748f-178e-4c4f-99dd-8ed17760acb7",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "Press",
-                    "initialStateCheck": false
-                },
-                {
-                    "name": "up/down",
-                    "type": "Button",
-                    "id": "448496ea-9984-4ca8-a110-0dea14b7fef8",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "",
-                    "initialStateCheck": false
-                },
                 {
                     "name": "BaseSize",
                     "type": "Button",
@@ -190,51 +294,9 @@
                     "processors": "",
                     "interactions": "Press",
                     "initialStateCheck": false
-                },
-                {
-                    "name": "Paint",
-                    "type": "Button",
-                    "id": "2fa69458-bf15-4595-ab0b-3c7a3bf73d9c",
-                    "expectedControlType": "",
-                    "processors": "",
-                    "interactions": "Press",
-                    "initialStateCheck": false
                 }
             ],
             "bindings": [
-                {
-                    "name": "",
-                    "id": "3a2903c7-7e79-470c-a58c-9b322d9ef8f7",
-                    "path": "<Keyboard>/1",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "CenterAnchor",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "15b1c700-ed45-4540-81f8-f2b23a6fc6b4",
-                    "path": "<Keyboard>/2",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "CornerAnchor",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "adec93b3-aca4-4337-86cf-942533566b29",
-                    "path": "<Keyboard>/3",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "SideAnchor",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
                 {
                     "name": "",
                     "id": "26807ed7-4e16-477d-9734-e8a35f22a48b",
@@ -271,7 +333,7 @@
                 {
                     "name": "",
                     "id": "416e2eb4-32f6-44e8-bd0d-a7bfdc9ae84b",
-                    "path": "<Keyboard>/a",
+                    "path": "<Mouse>/leftButton",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -282,7 +344,7 @@
                 {
                     "name": "",
                     "id": "7eca26e8-48a4-4faf-9076-675c24d86f33",
-                    "path": "<Keyboard>/s",
+                    "path": "<Mouse>/rightButton",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
@@ -331,28 +393,6 @@
                     "processors": "",
                     "groups": "",
                     "action": "Clear",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "8b8b04ac-d543-4c99-9f03-8bfb71077ec7",
-                    "path": "<Mouse>/leftButton",
-                    "interactions": "",
-                    "processors": "",
-                    "groups": "",
-                    "action": "Paint",
-                    "isComposite": false,
-                    "isPartOfComposite": false
-                },
-                {
-                    "name": "",
-                    "id": "5fb83435-9d45-41af-b62b-b2823446b727",
-                    "path": "<Keyboard>/4",
-                    "interactions": "Press",
-                    "processors": "",
-                    "groups": "",
-                    "action": "up/down",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

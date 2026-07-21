@@ -6,20 +6,11 @@ public class UnitPlacementResult
 {
     public TriangleNode anchorNode;
     public TriangleCell anchorCell;
-
     public List<TriangleCell> baseCells = new();
     public List<TriangleCell> supportCells = new();
+    public UnitFootprintFacing facing;
 
-    public Vector3 AnchorWorldPosition
-    {
-        get
-        {
-            if (anchorNode == null)
-                return Vector3.zero;
-
-            return anchorNode.worldPosition;
-        }
-    }
+    public Vector3 AnchorWorldPosition => anchorNode == null ? Vector3.zero : anchorNode.worldPosition;
 }
 
 public static class UnitFootprintResolver
@@ -28,6 +19,7 @@ public static class UnitFootprintResolver
         TriangleGridManager grid,
         UnitDefinition unit,
         Vector3 worldPosition,
+        UnitFootprintFacing facing,
         float maxSnapDistance,
         out UnitPlacementResult result,
         Func<TriangleCell, bool> extraBaseCellValidity = null
@@ -38,7 +30,11 @@ public static class UnitFootprintResolver
         if (grid == null || unit == null)
             return false;
 
-        TriangleNode anchorNode = grid.FindClosestAnchorNode(worldPosition, unit.anchorType, maxSnapDistance);
+        TriangleNode anchorNode = grid.FindClosestAnchorNode(
+            worldPosition,
+            UnitAnchorType.Corner,
+            maxSnapDistance
+        );
 
         if (anchorNode == null)
             return false;
@@ -47,6 +43,7 @@ public static class UnitFootprintResolver
             grid,
             unit,
             anchorNode,
+            facing,
             out result,
             extraBaseCellValidity
         );
@@ -56,6 +53,7 @@ public static class UnitFootprintResolver
         TriangleGridManager grid,
         UnitDefinition unit,
         TriangleNode anchorNode,
+        UnitFootprintFacing facing,
         out UnitPlacementResult result,
         Func<TriangleCell, bool> extraBaseCellValidity = null
     )
@@ -65,54 +63,20 @@ public static class UnitFootprintResolver
         if (grid == null || unit == null || anchorNode == null)
             return false;
 
-        if (!anchorNode.SupportsUnitAnchorType(unit.anchorType))
+        if (!anchorNode.SupportsUnitAnchorType(UnitAnchorType.Corner))
             return false;
 
-        foreach (TriangleCell possibleAnchorCell in anchorNode.ownerTriangles)
-        {
-            if (possibleAnchorCell == null)
-                continue;
+        IReadOnlyList<TriangleFootprintCell> baseFootprint = unit.GetFootprint(UnitFootprintArea.BaseSize);
+        IReadOnlyList<TriangleFootprintCell> supportFootprint = unit.GetFootprint(UnitFootprintArea.SupportRange);
 
-            if (TryResolvePlacementFromAnchorCell(
-                    grid,
-                    unit,
-                    anchorNode,
-                    possibleAnchorCell,
-                    out UnitPlacementResult candidate,
-                    extraBaseCellValidity
-                ))
-            {
-                result = candidate;
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public static bool TryResolvePlacementFromAnchorCell(
-        TriangleGridManager grid,
-        UnitDefinition unit,
-        TriangleNode anchorNode,
-        TriangleCell anchorCell,
-        out UnitPlacementResult result,
-        Func<TriangleCell, bool> extraBaseCellValidity = null
-    )
-    {
-        result = null;
-
-        if (grid == null || unit == null || anchorCell == null)
+        if (baseFootprint == null || baseFootprint.Count == 0)
             return false;
-
-        if (unit.baseSize == null || unit.baseSize.Count == 0)
-            return false;
-
-        IReadOnlyList<TriangleFootprintCell> baseFootprint = unit.GetBaseFootprint(anchorCell.orientation);
 
         List<TriangleCell> baseCells = ResolveCells(
             grid,
-            anchorCell,
+            anchorNode,
             baseFootprint,
+            facing,
             onlyActive: false
         );
 
@@ -134,12 +98,11 @@ public static class UnitFootprintResolver
                 return false;
         }
 
-        IReadOnlyList<TriangleFootprintCell> supportFootprint = unit.GetSupportFootprint(anchorCell.orientation);
-
         List<TriangleCell> supportCells = ResolveCells(
             grid,
-            anchorCell,
+            anchorNode,
             supportFootprint,
+            facing,
             onlyActive: true
         );
 
@@ -149,45 +112,64 @@ public static class UnitFootprintResolver
         result = new UnitPlacementResult
         {
             anchorNode = anchorNode,
-            anchorCell = anchorCell,
+            anchorCell = GetFirstOwnerCell(anchorNode),
             baseCells = baseCells,
-            supportCells = supportCells
+            supportCells = supportCells,
+            facing = facing
         };
 
         return true;
     }
 
-    public static List<TriangleCell> ResolveCells(
-    TriangleGridManager grid,
-    TriangleCell anchorCell,
-    IReadOnlyList<TriangleFootprintCell> footprint,
-    bool onlyActive = false
-)
+    private static TriangleCell GetFirstOwnerCell(TriangleNode anchorNode)
+    {
+        if (anchorNode == null)
+            return null;
+
+        foreach (TriangleCell cell in anchorNode.ownerTriangles)
+            return cell;
+
+        return null;
+    }
+
+    private static List<TriangleCell> ResolveCells(
+        TriangleGridManager grid,
+        TriangleNode anchorNode,
+        IReadOnlyList<TriangleFootprintCell> footprint,
+        UnitFootprintFacing facing,
+        bool onlyActive
+    )
     {
         List<TriangleCell> result = new();
 
-        if (grid == null || anchorCell == null || footprint == null)
+        if (grid == null || anchorNode == null || footprint == null)
             return result;
 
-        TriangleMapDefinition map = grid.MapDefinition;
-
-        int anchorProfileX = map != null
-            ? map.GetProfileColumn(anchorCell.coord)
-            : anchorCell.coord.x;
+        float cellSnapDistance = grid.MapDefinition != null
+            ? grid.MapDefinition.sideLength * 0.6f
+            : 0.6f;
 
         foreach (TriangleFootprintCell footprintCell in footprint)
         {
-            int targetRow = anchorCell.coord.y + footprintCell.y;
-            int targetProfileX = anchorProfileX + footprintCell.x;
+            float sideLength = grid.MapDefinition != null ? grid.MapDefinition.sideLength : 1f;
 
-            Vector2Int coord;
+            Vector2 localWorldOffset = new Vector2(
+                footprintCell.localX * sideLength,
+                footprintCell.localY * sideLength
+            );
 
-            if (map != null)
-                coord = map.GetCoordFromProfileColumn(targetProfileX, targetRow);
-            else
-                coord = new Vector2Int(targetProfileX, targetRow);
+            Vector2 rotatedOffset = RotateOffset(
+                localWorldOffset,
+                facing
+            );
 
-            TriangleCell cell = grid.GetCell(coord);
+            Vector3 targetCenter = anchorNode.worldPosition + new Vector3(
+                rotatedOffset.x,
+                rotatedOffset.y,
+                0f
+            );
+
+            TriangleCell cell = grid.FindClosestCellCenter(targetCenter, cellSnapDistance);
 
             if (cell == null)
                 continue;
@@ -200,5 +182,18 @@ public static class UnitFootprintResolver
         }
 
         return result;
+    }
+
+    private static Vector2 RotateOffset(Vector2 offset, UnitFootprintFacing facing)
+    {
+        float angle = -(int)facing * 60f;
+        float radians = angle * Mathf.Deg2Rad;
+        float cos = Mathf.Cos(radians);
+        float sin = Mathf.Sin(radians);
+
+        return new Vector2(
+            offset.x * cos - offset.y * sin,
+            offset.x * sin + offset.y * cos
+        );
     }
 }
