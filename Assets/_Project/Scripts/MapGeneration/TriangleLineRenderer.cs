@@ -17,11 +17,18 @@ public class TriangleLineRenderer : MonoBehaviour
     [SerializeField] private string sortingLayerName = "Default";
     [SerializeField] private float zOffset = -0.1f;
 
-    [Header("Dynamic Colors")]
-    [SerializeField] private Color placementColor = Color.yellow;
-    [SerializeField] private Color hoverColor = Color.white;
-    [SerializeField] private Color footprintColor = new Color(0.2f, 0.5f, 1f, 1f);
-    [SerializeField] private Color invalidColor = Color.red;
+    [Header("Placement / Control Colors")]
+    [SerializeField] private Color whiteStartAreaColor = new Color(1f, 0.72f, 0.18f, 1f);
+    [SerializeField] private Color blackStartAreaColor = new Color(0.45f, 0.35f, 1f, 1f);
+
+    [SerializeField] private Color activeSupportColor = new Color(0.1f, 0.9f, 1f, 1f);
+    [SerializeField] private Color disabledSupportColor = new Color(0.05f, 0.25f, 0.3f, 1f);
+
+    [SerializeField] private Color hoverColor = new Color(1f, 1f, 0.2f, 1f);
+    [SerializeField] private Color previewValidColor = new Color(0.5f, 1f, 0.2f, 1f);
+    [SerializeField] private Color previewInvalidColor = new Color(1f, 0.25f, 0.1f, 1f);
+
+    [SerializeField] private Color unitBaseColor = new Color(1f, 0.45f, 0.12f, 1f);
 
     private Material runtimeLineMaterial;
 
@@ -33,30 +40,19 @@ public class TriangleLineRenderer : MonoBehaviour
         public readonly List<TriangleCell> ownerTriangles = new();
     }
 
-    private class RegionRowBounds
-{
-    public bool hasCells;
+    private class RowContour
+    {
+        public bool hasCells;
 
-    public int leftProfileX = int.MaxValue;
-    public int rightProfileX = int.MinValue;
+        public TriangleCell leftCell;
+        public TriangleCell rightCell;
 
-    public TriangleCell leftCell;
-    public TriangleCell rightCell;
-}
+        public TriangleNode leftLower;
+        public TriangleNode leftUpper;
 
-private class RowContour
-{
-    public bool hasCells;
-
-    public TriangleCell leftCell;
-    public TriangleCell rightCell;
-
-    public TriangleNode leftLower;
-    public TriangleNode leftUpper;
-
-    public TriangleNode rightLower;
-    public TriangleNode rightUpper;
-}
+        public TriangleNode rightLower;
+        public TriangleNode rightUpper;
+    }
 
     private readonly Dictionary<string, RenderedSegment> segmentsByKey = new();
 
@@ -97,39 +93,37 @@ private class RowContour
             AddCellLineSegments(cell);
         }
 
-        foreach (TriangleCell cell in grid.AllCells)
+        if (addShrinkingProfileClosureEdges)
         {
-            if (cell == null || !cell.isActive)
-                continue;
-
-            activeCount++;
-            AddCellLineSegments(cell);
+            // Kept as a setting for compatibility.
+            // The old closure-edge method was disabled in your uploaded script,
+            // so this renderer currently builds the normal triangle segment lines only.
         }
-
-        // if (addShrinkingProfileClosureEdges)
-        //     AddShrinkingProfileClosureEdges();
 
         RefreshLineColors();
 
         Debug.Log($"Triangle lines built. Active cells: {activeCount}, Segments: {segmentsByKey.Count}");
     }
 
-    void AddCellLineSegments(TriangleCell cell)
+    private void AddCellLineSegments(TriangleCell cell)
     {
-        // Side 0: corner 0 -> midpoint 0 -> corner 1
+        if (cell == null || cell.corners == null || cell.sideMidpoints == null)
+            return;
+
+        if (cell.corners.Length < 3 || cell.sideMidpoints.Length < 3)
+            return;
+
         TryAddSegment(cell.corners[0], cell.sideMidpoints[0], cell);
         TryAddSegment(cell.sideMidpoints[0], cell.corners[1], cell);
 
-        // Side 1: corner 1 -> midpoint 1 -> corner 2
         TryAddSegment(cell.corners[1], cell.sideMidpoints[1], cell);
         TryAddSegment(cell.sideMidpoints[1], cell.corners[2], cell);
 
-        // Side 2: corner 2 -> midpoint 2 -> corner 0
         TryAddSegment(cell.corners[2], cell.sideMidpoints[2], cell);
         TryAddSegment(cell.sideMidpoints[2], cell.corners[0], cell);
     }
 
-    void TryAddSegment(TriangleNode a, TriangleNode b, TriangleCell owner)
+    private void TryAddSegment(TriangleNode a, TriangleNode b, TriangleCell owner)
     {
         if (a == null || b == null || owner == null)
             return;
@@ -160,7 +154,7 @@ private class RowContour
         segmentsByKey[key] = segment;
     }
 
-    LineRenderer CreateLine(Vector3 start, Vector3 end)
+    private LineRenderer CreateLine(Vector3 start, Vector3 end)
     {
         GameObject lineObject = new GameObject("TriangleLineSegment");
         lineObject.transform.SetParent(transform, false);
@@ -204,7 +198,7 @@ private class RowContour
         }
     }
 
-    Color GetSegmentColor(RenderedSegment segment)
+    private Color GetSegmentColor(RenderedSegment segment)
     {
         TriangleNodeVisualState dynamicState = GetSharedEndpointState(segment);
 
@@ -219,14 +213,14 @@ private class RowContour
         return Color.black;
     }
 
-    TriangleNodeVisualState GetSharedEndpointState(RenderedSegment segment)
+    private TriangleNodeVisualState GetSharedEndpointState(RenderedSegment segment)
     {
+        if (segment == null || segment.a == null || segment.b == null)
+            return TriangleNodeVisualState.None;
+
         TriangleNodeVisualState aState = segment.a.CurrentState;
         TriangleNodeVisualState bState = segment.b.CurrentState;
 
-        // This matches your rule:
-        // if both points of this line segment are the same color/state,
-        // the whole line segment becomes that color.
         if (aState == bState && aState != TriangleNodeVisualState.None)
             return aState;
 
@@ -237,24 +231,37 @@ private class RowContour
     {
         switch (state)
         {
-            case TriangleNodeVisualState.Invalid:
-                return invalidColor;
+            case TriangleNodeVisualState.WhiteStartArea:
+                return whiteStartAreaColor;
 
-            case TriangleNodeVisualState.Footprint:
-                return footprintColor;
+            case TriangleNodeVisualState.BlackStartArea:
+                return blackStartAreaColor;
 
-            case TriangleNodeVisualState.Placement:
-                return placementColor;
+            case TriangleNodeVisualState.ActiveSupport:
+                return activeSupportColor;
+
+            case TriangleNodeVisualState.DisabledSupport:
+                return disabledSupportColor;
 
             case TriangleNodeVisualState.Hover:
                 return hoverColor;
 
+            case TriangleNodeVisualState.PreviewValid:
+                return previewValidColor;
+
+            case TriangleNodeVisualState.PreviewInvalid:
+                return previewInvalidColor;
+
+            case TriangleNodeVisualState.UnitBase:
+                return unitBaseColor;
+
+            case TriangleNodeVisualState.None:
             default:
                 return Color.black;
         }
     }
 
-    MapRegion GetRegionForSegment(RenderedSegment segment)
+    private MapRegion GetRegionForSegment(RenderedSegment segment)
     {
         if (segment == null)
             return MapRegion.Neutral;
@@ -301,9 +308,12 @@ private class RowContour
         return MapRegion.Neutral;
     }
 
-    List<TriangleCell> GetAllSegmentOwners(RenderedSegment segment)
+    private List<TriangleCell> GetAllSegmentOwners(RenderedSegment segment)
     {
         List<TriangleCell> result = new();
+
+        if (segment == null)
+            return result;
 
         if (segment.ownerTriangles != null)
         {
@@ -335,7 +345,7 @@ private class RowContour
         return result;
     }
 
-    int GetRegionPriority(MapRegion region)
+    private int GetRegionPriority(MapRegion region)
     {
         switch (region)
         {
@@ -361,7 +371,7 @@ private class RowContour
         }
     }
 
-    void PrepareRuntimeMaterial()
+    private void PrepareRuntimeMaterial()
     {
         if (runtimeLineMaterial == null)
         {
@@ -372,7 +382,7 @@ private class RowContour
         runtimeLineMaterial.color = Color.white;
     }
 
-    void ClearLines()
+    private void ClearLines()
     {
         segmentsByKey.Clear();
 
@@ -387,7 +397,7 @@ private class RowContour
         }
     }
 
-    string MakeSegmentKey(TriangleNode a, TriangleNode b)
+    private string MakeSegmentKey(TriangleNode a, TriangleNode b)
     {
         int compare = string.CompareOrdinal(a.key, b.key);
 
@@ -397,7 +407,7 @@ private class RowContour
         return $"{b.key}|{a.key}";
     }
 
-    Dictionary<MapRegion, Dictionary<int, RowContour>> BuildRowContours()
+    private Dictionary<MapRegion, Dictionary<int, RowContour>> BuildRowContours()
     {
         Dictionary<MapRegion, Dictionary<int, List<TriangleCell>>> temp = new();
 
@@ -460,8 +470,7 @@ private class RowContour
                 contour.leftCell = leftCell;
                 contour.rightCell = rightCell;
 
-                // LEFT side: take the two corners with the smallest X
-                var leftCorners = new List<TriangleNode>(leftCell.corners);
+                List<TriangleNode> leftCorners = new(leftCell.corners);
                 leftCorners.Sort((a, b) =>
                 {
                     int xCompare = a.worldPosition.x.CompareTo(b.worldPosition.x);
@@ -483,8 +492,7 @@ private class RowContour
                     contour.leftUpper = leftA;
                 }
 
-                // RIGHT side: take the two corners with the largest X
-                var rightCorners = new List<TriangleNode>(rightCell.corners);
+                List<TriangleNode> rightCorners = new(rightCell.corners);
                 rightCorners.Sort((a, b) =>
                 {
                     int xCompare = b.worldPosition.x.CompareTo(a.worldPosition.x);

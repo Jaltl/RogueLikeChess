@@ -28,6 +28,15 @@ public class UnitPiece : MonoBehaviour
     public IReadOnlyList<TriangleCell> OccupiedCells => occupiedCells;
     public IReadOnlyList<TriangleCell> SupportCells => supportCells;
 
+    private bool supportActive;
+
+    public bool SupportActive => supportActive;
+
+    public void SetSupportActive(bool active)
+{
+    supportActive = active;
+}
+
     private void Reset()
     {
         AutoWire();

@@ -10,10 +10,17 @@ public enum TriangleOrientation
 public enum TriangleNodeVisualState
 {
     None,
-    Placement,
+
+    DisabledSupport,
+    WhiteStartArea,
+    BlackStartArea,
+    ActiveSupport,
+
+    UnitBase,
+
     Hover,
-    Footprint,
-    Invalid
+    PreviewValid,
+    PreviewInvalid
 }
 
 [System.Serializable]
@@ -31,19 +38,44 @@ public class TriangleNode
     public readonly List<TriangleCell> ownerTriangles = new();
     public readonly HashSet<UnitAnchorType> supportedUnitAnchors = new();
 
-    private bool placement;
+    private bool disabledSupport;
+    private bool whiteStartArea;
+    private bool blackStartArea;
+    private bool activeSupport;
     private bool hover;
-    private bool footprint;
-    private bool invalid;
+    private bool previewValid;
+    private bool previewInvalid;
+
+    private bool unitBase;
 
     public TriangleNodeVisualState CurrentState
     {
         get
         {
-            if (invalid) return TriangleNodeVisualState.Invalid;
-            if (footprint) return TriangleNodeVisualState.Footprint;
-            if (placement) return TriangleNodeVisualState.Placement;
-            if (hover) return TriangleNodeVisualState.Hover;
+            if (previewInvalid)
+                return TriangleNodeVisualState.PreviewInvalid;
+
+            if (previewValid)
+                return TriangleNodeVisualState.PreviewValid;
+
+            if (hover)
+                return TriangleNodeVisualState.Hover;
+
+            if (unitBase)
+                return TriangleNodeVisualState.UnitBase;
+
+            if (activeSupport)
+                return TriangleNodeVisualState.ActiveSupport;
+
+            if (whiteStartArea)
+                return TriangleNodeVisualState.WhiteStartArea;
+
+            if (blackStartArea)
+                return TriangleNodeVisualState.BlackStartArea;
+
+            if (disabledSupport)
+                return TriangleNodeVisualState.DisabledSupport;
+
             return TriangleNodeVisualState.None;
         }
     }
@@ -60,7 +92,7 @@ public class TriangleNode
             ownerTriangles.Add(triangle);
     }
 
-     public void RegisterUnitAnchorType(UnitAnchorType anchorType)
+    public void RegisterUnitAnchorType(UnitAnchorType anchorType)
     {
         supportedUnitAnchors.Add(anchorType);
     }
@@ -74,30 +106,54 @@ public class TriangleNode
     {
         switch (state)
         {
-            case TriangleNodeVisualState.Placement:
-                placement = active;
+            case TriangleNodeVisualState.DisabledSupport:
+                disabledSupport = active;
+                break;
+
+            case TriangleNodeVisualState.WhiteStartArea:
+                whiteStartArea = active;
+                break;
+
+            case TriangleNodeVisualState.BlackStartArea:
+                blackStartArea = active;
+                break;
+
+            case TriangleNodeVisualState.ActiveSupport:
+                activeSupport = active;
                 break;
 
             case TriangleNodeVisualState.Hover:
                 hover = active;
                 break;
 
-            case TriangleNodeVisualState.Footprint:
-                footprint = active;
+            case TriangleNodeVisualState.PreviewValid:
+                previewValid = active;
                 break;
 
-            case TriangleNodeVisualState.Invalid:
-                invalid = active;
+            case TriangleNodeVisualState.PreviewInvalid:
+                previewInvalid = active;
+                break;
+            
+            case TriangleNodeVisualState.UnitBase:
+                unitBase = active;
+                break;
+
+            case TriangleNodeVisualState.None:
+            default:
                 break;
         }
     }
 
     public void ClearVisualStates()
     {
-        placement = false;
+        disabledSupport = false;
+        whiteStartArea = false;
+        blackStartArea = false;
+        activeSupport = false;
+        unitBase = false;
         hover = false;
-        footprint = false;
-        invalid = false;
+        previewValid = false;
+        previewInvalid = false;
     }
 }
 
@@ -123,19 +179,32 @@ public class TriangleCell
 
     public TriangleNode center;
 
-    public Vector3 CenterPosition => center.worldPosition;
+    public Vector3 CenterPosition
+    {
+        get
+        {
+            if (center == null)
+                return Vector3.zero;
+
+            return center.worldPosition;
+        }
+    }
 
     public IEnumerable<TriangleNode> AllNodes
     {
         get
         {
-            yield return corners[0];
-            yield return corners[1];
-            yield return corners[2];
+            if (corners != null)
+            {
+                for (int i = 0; i < corners.Length; i++)
+                    yield return corners[i];
+            }
 
-            yield return sideMidpoints[0];
-            yield return sideMidpoints[1];
-            yield return sideMidpoints[2];
+            if (sideMidpoints != null)
+            {
+                for (int i = 0; i < sideMidpoints.Length; i++)
+                    yield return sideMidpoints[i];
+            }
 
             yield return center;
         }
@@ -144,7 +213,10 @@ public class TriangleCell
     public void SetWholeVisualState(TriangleNodeVisualState state, bool active)
     {
         foreach (TriangleNode node in AllNodes)
-            node.SetState(state, active);
+        {
+            if (node != null)
+                node.SetState(state, active);
+        }
     }
 
     public void SetSideVisualState(int sideIndex, TriangleNodeVisualState state, bool active)
@@ -152,12 +224,23 @@ public class TriangleCell
         if (sideIndex < 0 || sideIndex > 2)
             return;
 
+        if (corners == null || corners.Length < 3)
+            return;
+
+        if (sideMidpoints == null || sideMidpoints.Length < 3)
+            return;
+
         int aIndex = sideIndex;
         int bIndex = sideIndex == 2 ? 0 : sideIndex + 1;
 
-        corners[aIndex].SetState(state, active);
-        sideMidpoints[sideIndex].SetState(state, active);
-        corners[bIndex].SetState(state, active);
+        if (corners[aIndex] != null)
+            corners[aIndex].SetState(state, active);
+
+        if (sideMidpoints[sideIndex] != null)
+            sideMidpoints[sideIndex].SetState(state, active);
+
+        if (corners[bIndex] != null)
+            corners[bIndex].SetState(state, active);
     }
 
     public void SetSideHalfVisualState(
@@ -170,24 +253,39 @@ public class TriangleCell
         if (sideIndex < 0 || sideIndex > 2)
             return;
 
+        if (corners == null || corners.Length < 3)
+            return;
+
+        if (sideMidpoints == null || sideMidpoints.Length < 3)
+            return;
+
         int aIndex = sideIndex;
         int bIndex = sideIndex == 2 ? 0 : sideIndex + 1;
 
         if (firstHalf)
         {
-            corners[aIndex].SetState(state, active);
-            sideMidpoints[sideIndex].SetState(state, active);
+            if (corners[aIndex] != null)
+                corners[aIndex].SetState(state, active);
+
+            if (sideMidpoints[sideIndex] != null)
+                sideMidpoints[sideIndex].SetState(state, active);
         }
         else
         {
-            sideMidpoints[sideIndex].SetState(state, active);
-            corners[bIndex].SetState(state, active);
+            if (sideMidpoints[sideIndex] != null)
+                sideMidpoints[sideIndex].SetState(state, active);
+
+            if (corners[bIndex] != null)
+                corners[bIndex].SetState(state, active);
         }
     }
 
     public void ClearVisualStates()
     {
         foreach (TriangleNode node in AllNodes)
-            node.ClearVisualStates();
+        {
+            if (node != null)
+                node.ClearVisualStates();
+        }
     }
 }

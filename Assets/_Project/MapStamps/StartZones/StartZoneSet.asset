@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c9c6ded6ee191614bbacbb53fe6f0abc, type: 3}
+  m_Name: StartZoneSet
+  m_EditorClassIdentifier: Assembly-CSharp::MapStampSetDefinition
+  setName: Start Zones
+  stage: 1
+  stamps:
+  - {fileID: 11400000, guid: b83268a0fce5d0a45a7dbae1d635afed, type: 2}
+  - {fileID: 11400000, guid: 10e69b1b66b968b43be117f5c9b2bdf2, type: 2}
+  - {fileID: 11400000, guid: f5a0ca4dbdc1b224297a76c0a698d402, type: 2}

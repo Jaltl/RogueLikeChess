@@ -353,7 +353,7 @@ MonoBehaviour:
   rotateUpLeft: {fileID: 2632341511312239375, guid: 2bcd2660ca9b64942af0de543d8d7100, type: 3}
   snapDistanceMultiplier: 1.2
   ignorePointerOverUi: 0
-  showAnchorMarker: 1
+  showAnchorMarker: 0
   anchorMarkerRadius: 0.06
   anchorMarkerSegments: 24
   anchorMarkerZ: -0.2
@@ -1528,10 +1528,14 @@ MonoBehaviour:
   sortingOrder: 50
   sortingLayerName: Default
   zOffset: -0.1
-  placementColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
+  whiteStartAreaColor: {r: 1, g: 0.72, b: 0.18, a: 1}
+  blackStartAreaColor: {r: 0.45, g: 0.35, b: 1, a: 1}
+  activeSupportColor: {r: 0.1, g: 0.9, b: 1, a: 1}
+  disabledSupportColor: {r: 0.05, g: 0.25, b: 0.3, a: 1}
   hoverColor: {r: 0.19999999, g: 0.89423, b: 1, a: 1}
-  footprintColor: {r: 0.2, g: 0.5, b: 1, a: 1}
-  invalidColor: {r: 1, g: 0, b: 0, a: 1}
+  previewValidColor: {r: 0.5, g: 1, b: 0.2, a: 1}
+  previewInvalidColor: {r: 1, g: 0.25, b: 0.1, a: 1}
+  unitBaseColor: {r: 1, g: 0.45, b: 0.12, a: 1}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
