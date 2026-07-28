@@ -15,6 +15,9 @@ public class UnitPiece : MonoBehaviour
     [Header("Child Sprite")]
     [SerializeField] private SpriteRenderer spriteRenderer;
 
+    private bool supportActive;
+    private bool isDefeated;
+
     private PlayerSide owner;
     private TriangleNode anchorNode;
     private TriangleCell anchorCell;
@@ -27,15 +30,23 @@ public class UnitPiece : MonoBehaviour
     public TriangleCell AnchorCell => anchorCell;
     public IReadOnlyList<TriangleCell> OccupiedCells => occupiedCells;
     public IReadOnlyList<TriangleCell> SupportCells => supportCells;
-
-    private bool supportActive;
-
+    public bool IsDefeated => isDefeated;
     public bool SupportActive => supportActive;
 
     public void SetSupportActive(bool active)
-{
-    supportActive = active;
-}
+    {
+        supportActive = active;
+    }
+
+    public void SetDefeated(bool defeated)
+    {
+        isDefeated = defeated;
+
+        if(isDefeated)
+        {
+            SetSupportActive(false);
+        }
+    }
 
     private void Reset()
     {

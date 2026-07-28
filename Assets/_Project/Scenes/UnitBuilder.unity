@@ -1342,7 +1342,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 84d4d5e3df2cb364eb45fca3450b8ee1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitFootprintBuilder
-  unitDefinition: {fileID: 11400000, guid: 4b6e2f4106bc1ad4b9b896ca98681083, type: 2}
+  unitDefinition: {fileID: 11400000, guid: 48484938e5208924d8c02991c368f3bd, type: 2}
   geometrySource: {fileID: 0}
   columns: 61
   rows: 19
@@ -1384,8 +1384,6 @@ MonoBehaviour:
   mirrorActiveColor: {r: 0.25, g: 0.9, b: 1, a: 1}
   baseSizeButton: {fileID: 1951572813}
   supportRangeButton: {fileID: 167283826}
-  selectButton: {fileID: 0}
-  deselectButton: {fileID: 0}
   mirrorButton: {fileID: 1720807056}
 --- !u!4 &976565205
 Transform:

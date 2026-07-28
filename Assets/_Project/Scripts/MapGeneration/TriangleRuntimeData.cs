@@ -16,11 +16,17 @@ public enum TriangleNodeVisualState
     BlackStartArea,
     ActiveSupport,
 
-    UnitBase,
+    FriendlyUnitBase,
+    EnemyUnitBase,
+    DefeatedUnitBase,
 
     Hover,
-    PreviewValid,
-    PreviewInvalid
+
+    PreviewSupport,
+    PreviewBaseValid,
+    PreviewBaseInvalid,
+
+    Conflict
 }
 
 [System.Serializable]
@@ -43,26 +49,45 @@ public class TriangleNode
     private bool blackStartArea;
     private bool activeSupport;
     private bool hover;
-    private bool previewValid;
-    private bool previewInvalid;
 
-    private bool unitBase;
+    private bool previewSupport;
+    private bool previewBaseValid;
+    private bool previewBaseInvalid;
+
+    // private bool unitBase;
+
+    private bool friendlyUnitBase;
+    private bool enemyUnitBase;
+    private bool defeatedUnitBase;
+    private bool conflict;
 
     public TriangleNodeVisualState CurrentState
     {
         get
         {
-            if (previewInvalid)
-                return TriangleNodeVisualState.PreviewInvalid;
+            if (previewSupport)
+                return TriangleNodeVisualState.PreviewSupport;
 
-            if (previewValid)
-                return TriangleNodeVisualState.PreviewValid;
+            if (previewBaseValid)
+                return TriangleNodeVisualState.PreviewBaseValid;
+
+            if (previewBaseInvalid)
+                return TriangleNodeVisualState.PreviewBaseInvalid;
+
+            if (conflict)
+                return TriangleNodeVisualState.Conflict;
 
             if (hover)
                 return TriangleNodeVisualState.Hover;
 
-            if (unitBase)
-                return TriangleNodeVisualState.UnitBase;
+            if (friendlyUnitBase)
+                return TriangleNodeVisualState.FriendlyUnitBase;
+
+            if (enemyUnitBase)
+                return TriangleNodeVisualState.EnemyUnitBase;
+
+            if (defeatedUnitBase)
+                return TriangleNodeVisualState.DefeatedUnitBase;
 
             if (activeSupport)
                 return TriangleNodeVisualState.ActiveSupport;
@@ -126,16 +151,32 @@ public class TriangleNode
                 hover = active;
                 break;
 
-            case TriangleNodeVisualState.PreviewValid:
-                previewValid = active;
+            case TriangleNodeVisualState.PreviewSupport:
+                previewSupport = active;
                 break;
 
-            case TriangleNodeVisualState.PreviewInvalid:
-                previewInvalid = active;
+            case TriangleNodeVisualState.PreviewBaseValid:
+                previewBaseValid = active;
+                break;
+
+            case TriangleNodeVisualState.PreviewBaseInvalid:
+                previewBaseInvalid = active;
                 break;
             
-            case TriangleNodeVisualState.UnitBase:
-                unitBase = active;
+            case TriangleNodeVisualState.FriendlyUnitBase:
+                friendlyUnitBase = active;
+                break;
+
+            case TriangleNodeVisualState.EnemyUnitBase:
+                enemyUnitBase = active;
+                break;
+
+            case TriangleNodeVisualState.DefeatedUnitBase:
+                defeatedUnitBase = active;
+                break;
+
+            case TriangleNodeVisualState.Conflict:
+                conflict = active;
                 break;
 
             case TriangleNodeVisualState.None:
@@ -150,10 +191,15 @@ public class TriangleNode
         whiteStartArea = false;
         blackStartArea = false;
         activeSupport = false;
-        unitBase = false;
+        // unitBase = false;
         hover = false;
-        previewValid = false;
-        previewInvalid = false;
+        previewSupport = false;
+        previewBaseValid = false;
+        previewBaseInvalid = false;
+        friendlyUnitBase = false;
+        enemyUnitBase = false;
+        defeatedUnitBase = false;
+        conflict = false;
     }
 }
 

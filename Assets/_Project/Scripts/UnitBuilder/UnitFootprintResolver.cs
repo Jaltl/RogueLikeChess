@@ -106,8 +106,7 @@ public static class UnitFootprintResolver
             onlyActive: true
         );
 
-        HashSet<TriangleCell> baseSet = new(baseCells);
-        supportCells.RemoveAll(cell => cell == null || baseSet.Contains(cell));
+        supportCells.RemoveAll(cell => cell == null);
 
         result = new UnitPlacementResult
         {
@@ -132,27 +131,27 @@ public static class UnitFootprintResolver
         return null;
     }
 
-    private static List<TriangleCell> ResolveCells(
-        TriangleGridManager grid,
-        TriangleNode anchorNode,
-        IReadOnlyList<TriangleFootprintCell> footprint,
-        UnitFootprintFacing facing,
-        bool onlyActive
-    )
+    public static List<TriangleCell> ResolveCells(
+    TriangleGridManager grid,
+    TriangleNode anchorNode,
+    IReadOnlyList<TriangleFootprintCell> footprint,
+    UnitFootprintFacing facing,
+    bool onlyActive
+)
     {
         List<TriangleCell> result = new();
 
         if (grid == null || anchorNode == null || footprint == null)
             return result;
 
-        float cellSnapDistance = grid.MapDefinition != null
-            ? grid.MapDefinition.sideLength * 0.6f
-            : 0.6f;
+        float sideLength = grid.MapDefinition != null
+            ? grid.MapDefinition.sideLength
+            : 1f;
+
+        float cellSnapDistance = sideLength * 0.6f;
 
         foreach (TriangleFootprintCell footprintCell in footprint)
         {
-            float sideLength = grid.MapDefinition != null ? grid.MapDefinition.sideLength : 1f;
-
             Vector2 localWorldOffset = new Vector2(
                 footprintCell.localX * sideLength,
                 footprintCell.localY * sideLength
@@ -169,7 +168,10 @@ public static class UnitFootprintResolver
                 0f
             );
 
-            TriangleCell cell = grid.FindClosestCellCenter(targetCenter, cellSnapDistance);
+            TriangleCell cell = grid.FindClosestCellCenter(
+                targetCenter,
+                cellSnapDistance
+            );
 
             if (cell == null)
                 continue;

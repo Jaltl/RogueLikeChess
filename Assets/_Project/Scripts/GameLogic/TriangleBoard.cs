@@ -3,21 +3,22 @@ using UnityEngine;
 
 public class TriangleBoard : MonoBehaviour
 {
-    private readonly Dictionary<TriangleNode, UnitPiece> unitsByAnchor = new();
-    private readonly Dictionary<TriangleCell, UnitPiece> unitsByOccupiedCell = new();
-
     private readonly List<UnitPiece> units = new();
+    private readonly Dictionary<TriangleNode, UnitPiece> unitsByAnchor = new();
+    private readonly Dictionary<TriangleCell, List<UnitPiece>> unitsByOccupiedCell = new();
 
     public IReadOnlyList<UnitPiece> Units => units;
-
-    public bool HasUnit(TriangleCell cell)
-    {
-        return cell != null && unitsByOccupiedCell.ContainsKey(cell);
-    }
 
     public bool HasUnitAtAnchor(TriangleNode node)
     {
         return node != null && unitsByAnchor.ContainsKey(node);
+    }
+
+    public bool IsCellOccupied(TriangleCell cell)
+    {
+        return cell != null &&
+               unitsByOccupiedCell.TryGetValue(cell, out List<UnitPiece> cellUnits) &&
+               cellUnits.Count > 0;
     }
 
     public UnitPiece GetUnit(TriangleCell cell)
@@ -25,13 +26,80 @@ public class TriangleBoard : MonoBehaviour
         if (cell == null)
             return null;
 
-        unitsByOccupiedCell.TryGetValue(cell, out UnitPiece unit);
-        return unit;
+        if (!unitsByOccupiedCell.TryGetValue(cell, out List<UnitPiece> cellUnits))
+            return null;
+
+        for (int i = 0; i < cellUnits.Count; i++)
+        {
+            if (cellUnits[i] != null)
+                return cellUnits[i];
+        }
+
+        return null;
     }
 
-    public bool IsCellOccupied(TriangleCell cell)
+    public List<UnitPiece> GetUnits(TriangleCell cell)
     {
-        return cell != null && unitsByOccupiedCell.ContainsKey(cell);
+        if (cell == null)
+            return new List<UnitPiece>();
+
+        if (!unitsByOccupiedCell.TryGetValue(cell, out List<UnitPiece> cellUnits))
+            return new List<UnitPiece>();
+
+        return new List<UnitPiece>(cellUnits);
+    }
+
+    public HashSet<UnitPiece> GetUnitsOverlappingCells(IReadOnlyList<TriangleCell> cells)
+    {
+        HashSet<UnitPiece> result = new();
+
+        if (cells == null)
+            return result;
+
+        foreach (TriangleCell cell in cells)
+        {
+            if (cell == null)
+                continue;
+
+            if (!unitsByOccupiedCell.TryGetValue(cell, out List<UnitPiece> cellUnits))
+                continue;
+
+            foreach (UnitPiece unit in cellUnits)
+            {
+                if (unit != null)
+                    result.Add(unit);
+            }
+        }
+
+        return result;
+    }
+
+    public bool CellBlocksPlacementForSide(TriangleCell cell, PlayerSide placingSide)
+    {
+        if (cell == null)
+            return true;
+
+        if (!unitsByOccupiedCell.TryGetValue(cell, out List<UnitPiece> cellUnits))
+            return false;
+
+        foreach (UnitPiece unit in cellUnits)
+        {
+            if (unit == null)
+                continue;
+
+            // Dead units are terrain blockers.
+            if (unit.IsDefeated)
+                return true;
+
+            // Friendly units block placement.
+            if (unit.Owner == placingSide)
+                return true;
+
+            // Living enemy units do not block placement.
+            // They trigger direct-overlap conflict instead.
+        }
+
+        return false;
     }
 
     public void PlaceUnit(UnitPiece unit, UnitPlacementResult placement)
@@ -49,7 +117,14 @@ public class TriangleBoard : MonoBehaviour
             if (cell == null)
                 continue;
 
-            unitsByOccupiedCell[cell] = unit;
+            if (!unitsByOccupiedCell.TryGetValue(cell, out List<UnitPiece> cellUnits))
+            {
+                cellUnits = new List<UnitPiece>();
+                unitsByOccupiedCell[cell] = cellUnits;
+            }
+
+            if (!cellUnits.Contains(unit))
+                cellUnits.Add(unit);
         }
     }
 
@@ -60,19 +135,25 @@ public class TriangleBoard : MonoBehaviour
 
         units.Remove(unit);
 
-        if (unit.AnchorNode != null && unitsByAnchor.ContainsKey(unit.AnchorNode))
+        if (unit.AnchorNode != null &&
+            unitsByAnchor.TryGetValue(unit.AnchorNode, out UnitPiece anchoredUnit) &&
+            anchoredUnit == unit)
+        {
             unitsByAnchor.Remove(unit.AnchorNode);
+        }
 
         foreach (TriangleCell cell in unit.OccupiedCells)
         {
             if (cell == null)
                 continue;
 
-            if (unitsByOccupiedCell.TryGetValue(cell, out UnitPiece occupyingUnit) &&
-                occupyingUnit == unit)
-            {
+            if (!unitsByOccupiedCell.TryGetValue(cell, out List<UnitPiece> cellUnits))
+                continue;
+
+            cellUnits.Remove(unit);
+
+            if (cellUnits.Count == 0)
                 unitsByOccupiedCell.Remove(cell);
-            }
         }
 
         unit.ClearRuntimeCells();

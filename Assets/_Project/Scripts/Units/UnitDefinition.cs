@@ -17,9 +17,12 @@ public class UnitDefinition : ScriptableObject
     [Header("Prefab")]
     public UnitPiece unitPrefab;
 
-    [Header("Stats")]
-    public int power = 1;
-    public int cost = 1;
+    [Header("Conflict Stats")]
+    public int Power = 1;
+    public int Support = 0;
+    public int Cost = 1;
+
+    public UnitTag Tags = UnitTag.None;
 
     [Header("Placement")]
     public UnitAnchorType anchorType = UnitAnchorType.Corner;

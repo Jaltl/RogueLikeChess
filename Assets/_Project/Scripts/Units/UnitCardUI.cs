@@ -43,7 +43,7 @@ public class UnitCardUI : MonoBehaviour
 
     private void OnEnable()
     {
-        placementController = FindFirstObjectByType<TrianglePlacementController>();
+        placementController = FindAnyObjectByType<TrianglePlacementController>();
     }
 
     private void OnDestroy()
@@ -69,7 +69,7 @@ public class UnitCardUI : MonoBehaviour
         }
 
         if (placementController == null)
-            placementController = FindFirstObjectByType<TrianglePlacementController>();
+            placementController = FindAnyObjectByType<TrianglePlacementController>();
 
         if (placementController == null)
         {
@@ -91,10 +91,10 @@ public class UnitCardUI : MonoBehaviour
             nameText.text = unitDefinition.DisplayName;
 
         if (costText != null)
-            costText.text = unitDefinition.cost.ToString();
+            costText.text = unitDefinition.Cost.ToString();
 
         if (powerText != null)
-            powerText.text = unitDefinition.power.ToString();
+            powerText.text = unitDefinition.Power.ToString();
 
         if (iconImage != null)
         {
@@ -109,7 +109,7 @@ public class UnitCardUI : MonoBehaviour
             button = GetComponent<Button>();
 
         if (placementController == null && Application.isPlaying)
-            placementController = FindFirstObjectByType<TrianglePlacementController>();
+            placementController = FindAnyObjectByType<TrianglePlacementController>();
 
         TMP_Text[] texts = GetComponentsInChildren<TMP_Text>(true);
 

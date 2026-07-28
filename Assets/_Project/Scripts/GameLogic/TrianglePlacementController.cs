@@ -7,11 +7,18 @@ using System.Collections;
 public class TrianglePlacementController : MonoBehaviour
 {
     [Header("References")]
+    [SerializeField] private TrianglePlacementVisualController placementVisuals;
     [SerializeField] private TriangleGridManager grid;
     [SerializeField] private TriangleLineRenderer lineRenderer;
     [SerializeField] private TriangleBoard board;
+    [SerializeField] private GameFlowController gameFlow;
     [SerializeField] private Camera worldCamera;
     [SerializeField] private Transform unitRoot;
+
+    [Header("Turn Flow")]
+    [SerializeField] private bool switchPlayerAfterSuccessfulPlacement = true;
+
+public PlayerSide CurrentPlayer => currentPlayer;
 
     [Header("Input")]
     [SerializeField] private bool enableActionsManually = true;
@@ -68,7 +75,6 @@ private UnitFootprintFacing currentFacing = UnitFootprintFacing.Up;
     private bool currentPreviewIsValid;
 
     public bool HasSelectedUnit => selectedUnit != null;
-    public PlayerSide CurrentPlayer => currentPlayer;
 
     private bool placeRequested;
     private bool cancelRequested;
@@ -226,25 +232,25 @@ private UnitFootprintFacing currentFacing = UnitFootprintFacing.Up;
             $"WhiteStart: {whiteCount} | BlackStart: {blackCount}"
         );
     }
-
     public void SelectUnit(UnitDefinition unit)
     {
         selectedUnit = unit;
-        currentFacing = UnitFootprintFacing.Up;
+        currentFacing = GetDefaultFacingForPlayer(currentPlayer);
+
+        currentPreview = null;
+        currentPreviewIsValid = false;
+        HideAnchorMarker();
 
         if (selectedUnit != null)
-            Debug.Log($"Selected unit: {selectedUnit.unitName}");
+        {
+            Debug.Log(
+                $"Selected unit: {selectedUnit.DisplayName} | " +
+                $"Current player: {currentPlayer} | " +
+                $"Default facing: {currentFacing}"
+            );
+        }
 
-        Debug.Log(
-        $"Selected unit: {selectedUnit.unitName} | " +
-        $"Anchor: {selectedUnit.anchorType} | " +
-        $"Base cells: {(selectedUnit.baseSize == null ? -1 : selectedUnit.baseSize.Count)} | " +
-        $"Support cells: {(selectedUnit.supportRange == null ? -1 : selectedUnit.supportRange.Count)} | " +
-        $"Current player: {currentPlayer} | " +
-        $"Current zone cells: {GetCurrentPlacementZone().Count}"
-    );
-
-        ShowCurrentPlacementZone();
+        RebuildPlacementVisuals();
     }
 
     public void ClearSelectedUnit()
@@ -327,31 +333,6 @@ private UnitFootprintFacing currentFacing = UnitFootprintFacing.Up;
         Debug.Log($"[Placement Preview] {message}");
     }
 
-    private void ShowInvalidPreview(UnitPlacementResult placement)
-    {
-        if (placement == null)
-            return;
-
-        foreach (TriangleCell supportCell in placement.supportCells)
-        {
-            if (supportCell == null)
-                continue;
-
-            supportCell.SetWholeVisualState(TriangleNodeVisualState.Hover, true);
-        }
-
-        foreach (TriangleCell baseCell in placement.baseCells)
-        {
-            if (baseCell == null)
-                continue;
-
-            baseCell.SetWholeVisualState(TriangleNodeVisualState.PreviewInvalid, true);
-        }
-
-        if (placement.anchorNode != null)
-            placement.anchorNode.SetState(TriangleNodeVisualState.PreviewInvalid, true);
-    }
-
     bool IsBaseCellValidForCurrentPlayer(TriangleCell cell)
     {
         if (cell == null)
@@ -408,7 +389,7 @@ private UnitFootprintFacing currentFacing = UnitFootprintFacing.Up;
         //     return false;
 
         // Existing unit bodies block placement.
-        if (board != null && board.IsCellOccupied(cell))
+        if (board != null && board.CellBlocksPlacementForSide(cell, currentPlayer))
             return false;
 
         return true;
@@ -512,6 +493,10 @@ private UnitFootprintFacing currentFacing = UnitFootprintFacing.Up;
                 continue;
 
             unit.SetSupportActive(false);
+
+            if (unit.IsDefeated)
+                continue;
+
             sideUnits.Add(unit);
         }
 
@@ -713,6 +698,9 @@ private UnitFootprintFacing currentFacing = UnitFootprintFacing.Up;
         if (board != null)
             board.PlaceUnit(unit, currentPreview);
 
+        if (gameFlow != null)
+            gameFlow.RegisterPlacedUnit(unit);
+
         UnitFootprintFacing placedFacing = currentPreview.facing;
 
         RecalculateSupportNetwork(currentPlayer);
@@ -721,7 +709,19 @@ private UnitFootprintFacing currentFacing = UnitFootprintFacing.Up;
         currentPreviewIsValid = false;
         HideAnchorMarker();
 
-        RebuildPlacementVisuals();
+        if (switchPlayerAfterSuccessfulPlacement)
+            SwitchCurrentPlayer();
+        
+        selectedUnit = null;
+
+        if (gameFlow != null && gameFlow.ShouldResolveConflictPhase())
+        {
+            gameFlow.ResolveConflictPhase();
+        }
+        else
+        {
+            RebuildPlacementVisuals();
+        }
 
         Debug.Log(
             $"Placed {unitToPlace.DisplayName} for {currentPlayer}. Facing: {placedFacing}"
@@ -755,31 +755,6 @@ private UnitFootprintFacing currentFacing = UnitFootprintFacing.Up;
     private void ShowCurrentPlacementZone()
     {
         RebuildPlacementVisuals();
-    }
-
-    private void ShowValidPreview(UnitPlacementResult placement)
-    {
-        if (placement == null)
-            return;
-
-        foreach (TriangleCell supportCell in placement.supportCells)
-        {
-            if (supportCell == null)
-                continue;
-
-            supportCell.SetWholeVisualState(TriangleNodeVisualState.Hover, true);
-        }
-
-        foreach (TriangleCell baseCell in placement.baseCells)
-        {
-            if (baseCell == null)
-                continue;
-
-            baseCell.SetWholeVisualState(TriangleNodeVisualState.PreviewValid, true);
-        }
-
-        if (placement.anchorNode != null)
-            placement.anchorNode.SetState(TriangleNodeVisualState.PreviewValid, true);
     }
 
     void ClearPreview()
@@ -861,20 +836,15 @@ private UnitFootprintFacing currentFacing = UnitFootprintFacing.Up;
         }
     }
 
-    public void EndTurn()
+    private void SwitchCurrentPlayer()
     {
         currentPlayer = currentPlayer == PlayerSide.White
             ? PlayerSide.Black
             : PlayerSide.White;
 
-        selectedUnit = null;
-        currentPreview = null;
-        currentPreviewIsValid = false;
+        currentFacing = GetDefaultFacingForPlayer(currentPlayer);
 
-        ClearPreview();
-        ShowCurrentPlacementZone();
-
-        Debug.Log($"Turn switched to {currentPlayer}");
+        Debug.Log($"Current player is now {currentPlayer}. Default facing: {currentFacing}");
     }
 
     Vector3 GetPointerWorldPosition()
@@ -1062,93 +1032,6 @@ void SetFootprintFacing(UnitFootprintFacing facing)
         RebuildPlacementVisuals();
     }
 
-    private void ShowControlAreaVisuals()
-    {
-        if (grid == null)
-            return;
-
-        ShowStartAreaVisuals(currentPlayer);
-        ShowSupportVisuals(currentPlayer);
-    }
-
-    private void ShowStartAreaVisuals(PlayerSide side)
-    {
-        MapRegion startRegion = side == PlayerSide.White
-            ? MapRegion.WhiteStart
-            : MapRegion.BlackStart;
-
-        TriangleNodeVisualState state = side == PlayerSide.White
-            ? TriangleNodeVisualState.WhiteStartArea
-            : TriangleNodeVisualState.BlackStartArea;
-
-        foreach (TriangleCell cell in grid.AllCells)
-        {
-            if (cell == null)
-                continue;
-
-            if (!cell.isActive)
-                continue;
-
-            if (cell.region != startRegion)
-                continue;
-
-            cell.SetWholeVisualState(state, true);
-        }
-    }
-
-    private void ShowSupportVisuals(PlayerSide side)
-    {
-        if (board == null)
-            return;
-
-        foreach (UnitPiece unit in board.Units)
-        {
-            if (unit == null)
-                continue;
-
-            if (unit.Owner != side)
-                continue;
-
-            TriangleNodeVisualState state = unit.SupportActive
-                ? TriangleNodeVisualState.ActiveSupport
-                : TriangleNodeVisualState.DisabledSupport;
-
-            foreach (TriangleCell supportCell in unit.SupportCells)
-            {
-                if (supportCell == null)
-                    continue;
-
-                if (!supportCell.isActive)
-                    continue;
-
-                if (supportCell.isBlocked)
-                    continue;
-
-                supportCell.SetWholeVisualState(state, true);
-            }
-        }
-    }
-
-    private void ShowUnitBaseVisuals()
-    {
-        if (board == null)
-            return;
-
-        foreach (UnitPiece unit in board.Units)
-        {
-            if (unit == null)
-                continue;
-
-            foreach (TriangleCell baseCell in unit.OccupiedCells)
-            {
-                if (baseCell == null)
-                    continue;
-
-                baseCell.SetWholeVisualState(TriangleNodeVisualState.UnitBase, true);
-            }
-        }
-    }
-
     private void RebuildPlacementVisuals()
     {
         if (isRebuildingPlacementVisuals)
@@ -1156,27 +1039,14 @@ void SetFootprintFacing(UnitFootprintFacing facing)
 
         isRebuildingPlacementVisuals = true;
 
-        if (grid == null)
+        if (placementVisuals != null)
         {
-            isRebuildingPlacementVisuals = false;
-            return;
+            placementVisuals.Refresh(
+                currentPlayer,
+                currentPreview,
+                currentPreviewIsValid
+            );
         }
-
-        grid.ClearAllNodeVisualStates();
-
-        ShowStartAreaVisuals(currentPlayer);
-        ShowSupportVisuals(currentPlayer);
-        ShowUnitBaseVisuals();
-
-        if (currentPreview != null)
-        {
-            if (currentPreviewIsValid)
-                ShowValidPreview(currentPreview);
-            else
-                ShowInvalidPreview(currentPreview);
-        }
-
-        RefreshVisuals();
 
         isRebuildingPlacementVisuals = false;
     }
@@ -1222,5 +1092,20 @@ private void TryKillHoveredUnitForDebug()
     Debug.Log($"Debug killing hovered unit: {hoveredUnit.name}");
 
     KillUnit(hoveredUnit);
+}
+
+public void RecalculateAllSupportNetworks()
+{
+    RecalculateSupportNetwork(PlayerSide.White);
+    RecalculateSupportNetwork(PlayerSide.Black);
+
+    RebuildPlacementVisuals();
+}
+
+private UnitFootprintFacing GetDefaultFacingForPlayer(PlayerSide side)
+{
+    return side == PlayerSide.White
+        ? UnitFootprintFacing.Up
+        : UnitFootprintFacing.Down;
 }
 }

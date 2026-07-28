@@ -8,7 +8,7 @@ public class TriangleLineRenderer : MonoBehaviour
 
     [Header("Profile Edge Fixes")]
     [SerializeField] private bool addShrinkingProfileClosureEdges = true;
-    [SerializeField] private float connectorTolerance = 0.35f;
+    //[SerializeField] private float connectorTolerance = 0.35f;
 
     [Header("Line Visuals")]
     [SerializeField] private Material lineMaterial;
@@ -29,6 +29,14 @@ public class TriangleLineRenderer : MonoBehaviour
     [SerializeField] private Color previewInvalidColor = new Color(1f, 0.25f, 0.1f, 1f);
 
     [SerializeField] private Color unitBaseColor = new Color(1f, 0.45f, 0.12f, 1f);
+    [SerializeField] private Color friendlyUnitBaseColor = new Color(0.2f, 0.85f, 0.35f, 1f);
+    [SerializeField] private Color enemyUnitBaseColor = new Color(1f, 0.28f, 0.2f, 1f);
+    [SerializeField] private Color defeatedUnitBaseColor = new Color(0.35f, 0.35f, 0.35f, 1f);
+    [SerializeField] private Color conflictColor = new Color(1f, 0.1f, 0.05f, 1f);
+
+    [SerializeField] private Color previewSupportColor = new Color(0.1f, 0.8f, 0.95f, 1f);
+    [SerializeField] private Color previewBaseValidColor = new Color(0.45f, 1f, 0.2f, 1f);
+    [SerializeField] private Color previewBaseInvalidColor = new Color(1f, 0.12f, 0.08f, 1f);
 
     private Material runtimeLineMaterial;
 
@@ -107,20 +115,15 @@ public class TriangleLineRenderer : MonoBehaviour
 
     private void AddCellLineSegments(TriangleCell cell)
     {
-        if (cell == null || cell.corners == null || cell.sideMidpoints == null)
+        if (cell == null)
             return;
 
-        if (cell.corners.Length < 3 || cell.sideMidpoints.Length < 3)
+        if (cell.corners == null || cell.corners.Length < 3)
             return;
 
-        TryAddSegment(cell.corners[0], cell.sideMidpoints[0], cell);
-        TryAddSegment(cell.sideMidpoints[0], cell.corners[1], cell);
-
-        TryAddSegment(cell.corners[1], cell.sideMidpoints[1], cell);
-        TryAddSegment(cell.sideMidpoints[1], cell.corners[2], cell);
-
-        TryAddSegment(cell.corners[2], cell.sideMidpoints[2], cell);
-        TryAddSegment(cell.sideMidpoints[2], cell.corners[0], cell);
+        TryAddSegment(cell.corners[0], cell.corners[1], cell);
+        TryAddSegment(cell.corners[1], cell.corners[2], cell);
+        TryAddSegment(cell.corners[2], cell.corners[0], cell);
     }
 
     private void TryAddSegment(TriangleNode a, TriangleNode b, TriangleCell owner)
@@ -246,14 +249,26 @@ public class TriangleLineRenderer : MonoBehaviour
             case TriangleNodeVisualState.Hover:
                 return hoverColor;
 
-            case TriangleNodeVisualState.PreviewValid:
-                return previewValidColor;
+            case TriangleNodeVisualState.PreviewSupport:
+                return previewSupportColor;
 
-            case TriangleNodeVisualState.PreviewInvalid:
-                return previewInvalidColor;
+            case TriangleNodeVisualState.PreviewBaseValid:
+                return previewBaseValidColor;
 
-            case TriangleNodeVisualState.UnitBase:
-                return unitBaseColor;
+            case TriangleNodeVisualState.PreviewBaseInvalid:
+                return previewBaseInvalidColor;
+
+            case TriangleNodeVisualState.FriendlyUnitBase:
+                return friendlyUnitBaseColor;
+
+            case TriangleNodeVisualState.EnemyUnitBase:
+                return enemyUnitBaseColor;
+
+            case TriangleNodeVisualState.DefeatedUnitBase:
+                return defeatedUnitBaseColor;
+
+            case TriangleNodeVisualState.Conflict:
+                return conflictColor;
 
             case TriangleNodeVisualState.None:
             default:
