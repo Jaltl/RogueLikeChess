@@ -31,17 +31,14 @@ public class UnitBuilderTriangleView : MonoBehaviour
         CreateOutline(localCorners, outlineMaterial, outlineWidth);
     }
 
-    private void OnMouseDown()
-    {
-        if (builder != null)
-            builder.PaintTriangle(coord);
-    }
-
     private void OnMouseEnter()
     {
         if (builder != null)
             builder.SetHoveredTriangle(coord);
+    }
 
+    private void OnMouseOver()
+    {
         if (builder != null && builder.IsPaintHeld())
             builder.PaintTriangle(coord);
     }

@@ -88,6 +88,8 @@ public class UnitFootprintBuilder : MonoBehaviour
     private float TriangleHeight => SideLength * Mathf.Sqrt(3f) * 0.5f;
 
     private bool isPainting = false;
+    private Vector2Int? lastPaintedCoord;
+    private bool? lastPaintWasAdd;
 
     private struct BuilderSnapshot
     {
@@ -115,6 +117,21 @@ public class UnitFootprintBuilder : MonoBehaviour
     {
         ApplyDefaultToolState();
         LoadFromUnitDefinition();
+    }
+
+    private void Update()
+    {
+        if (!IsPaintHeld())
+        {
+            lastPaintedCoord = null;
+            lastPaintWasAdd = null;
+            return;
+        }
+
+        if (!hoveredCoord.HasValue)
+            return;
+
+        PaintTriangle(hoveredCoord.Value);
     }
 
     [ContextMenu("Rebuild Builder Grid")]
@@ -278,32 +295,53 @@ public class UnitFootprintBuilder : MonoBehaviour
 
     public void PaintTriangle(Vector2Int coord)
     {
+        if (!TryGetCurrentPaintMode(out bool add))
+            return;
+
+        PaintTriangle(coord, add);
+    }
+
+    private void PaintTriangle(Vector2Int coord, bool add)
+    {
+        if (lastPaintedCoord.HasValue &&
+            lastPaintedCoord.Value == coord &&
+            lastPaintWasAdd.HasValue &&
+            lastPaintWasAdd.Value == add)
+        {
+            return;
+        }
+
         List<Vector2Int> paintCoords = GetPaintCoords(coord);
 
-        if (!WouldPaintChangeAnything(paintCoords))
+        if (!WouldPaintChangeAnything(paintCoords, add))
             return;
+
+        lastPaintedCoord = coord;
+        lastPaintWasAdd = add;
 
         PushUndo();
 
         foreach (Vector2Int paintCoord in paintCoords)
-            ApplyPaintToTriangle(paintCoord);
+            ApplyPaintToTriangle(paintCoord, add);
 
         foreach (Vector2Int paintCoord in paintCoords)
             RefreshTriangleColor(paintCoord);
+
+        RefreshUiState();
     }
 
-    private bool WouldPaintChangeAnything(List<Vector2Int> coords)
+    private bool WouldPaintChangeAnything(List<Vector2Int> coords, bool add)
     {
         foreach (Vector2Int coord in coords)
         {
-            if (WouldPaintChangeTriangle(coord))
+            if (WouldPaintChangeTriangle(coord, add))
                 return true;
         }
 
         return false;
     }
 
-    private bool WouldPaintChangeTriangle(Vector2Int coord)
+    private bool WouldPaintChangeTriangle(Vector2Int coord, bool add)
     {
         if (!views.ContainsKey(coord))
             return false;
@@ -311,67 +349,51 @@ public class UnitFootprintBuilder : MonoBehaviour
         bool isEditingBase = currentArea == UnitFootprintArea.BaseSize;
         bool isEditingSupport = currentArea == UnitFootprintArea.SupportRange;
 
-        if (isPainting)
+        if (add)
         {
             if (isEditingBase)
-                return !baseSelection.Contains(coord);
+            {
+                // Adding base changes if it is not already base.
+                // It also removes support if support somehow exists there.
+                return !baseSelection.Contains(coord) || supportSelection.Contains(coord);
+            }
 
             if (isEditingSupport)
+            {
+                // Support cannot cover base.
                 return !baseSelection.Contains(coord) && !supportSelection.Contains(coord);
+            }
 
             return false;
         }
-        else
-        {
-            if (isEditingBase)
-                return baseSelection.Contains(coord);
 
-            if (isEditingSupport)
-                return supportSelection.Contains(coord);
-
-            return false;
-        }
+        // Right mouse erase removes from either area.
+        return baseSelection.Contains(coord) || supportSelection.Contains(coord);
     }
-    private void ApplyPaintToTriangle(Vector2Int coord)
+    private void ApplyPaintToTriangle(Vector2Int coord, bool add)
     {
-        HashSet<Vector2Int> target = currentArea == UnitFootprintArea.BaseSize ? baseSelection : supportSelection;
-
-        bool wouldChange;
-
-        if(isPainting)
-            if(currentArea == UnitFootprintArea.BaseSize)
-                wouldChange = !baseSelection.Contains(coord);
-            else
-                wouldChange = !baseSelection.Contains(coord) && !supportSelection.Contains(coord);
-        else
-            wouldChange = target.Contains(coord);
-
-        if (!wouldChange)
+        if (!views.ContainsKey(coord))
             return;
 
-        if (isPainting)
+        if (add)
         {
-            Debug.Log($"Adding coord {coord} to current selection");
-            if(currentArea == UnitFootprintArea.BaseSize)
+            if (currentArea == UnitFootprintArea.BaseSize)
             {
                 baseSelection.Add(coord);
                 supportSelection.Remove(coord);
             }
             else
             {
-                if(!baseSelection.Contains(coord))
+                if (!baseSelection.Contains(coord))
                     supportSelection.Add(coord);
             }
-
         }
         else
         {
-            Debug.Log($"Removing coord {coord} from current selection");
-            target.Remove(coord);
+            // Right mouse should erase regardless of current Base/Support tab.
+            baseSelection.Remove(coord);
+            supportSelection.Remove(coord);
         }
-
-        RefreshTriangleColor(coord);
-        RefreshUiState();
     }
 
     private HashSet<Vector2Int> GetCurrentSelection()
@@ -809,17 +831,34 @@ public class UnitFootprintBuilder : MonoBehaviour
 
     public bool IsPaintHeld()
     {
-        bool selectHeld =
-            selectAction != null &&
-            selectAction.action != null &&
-            selectAction.action.IsPressed();
+        if (Mouse.current == null)
+            return false;
 
-        bool deselectHeld =
-            deselectAction != null &&
-            deselectAction.action != null &&
-            deselectAction.action.IsPressed();
+        return Mouse.current.leftButton.isPressed ||
+            Mouse.current.rightButton.isPressed;
+    }
 
-        return selectHeld || deselectHeld;
+    private bool TryGetCurrentPaintMode(out bool add)
+    {
+        add = true;
+
+        if (Mouse.current == null)
+            return false;
+
+        // Right mouse wins if both buttons are held.
+        if (Mouse.current.rightButton.isPressed)
+        {
+            add = false;
+            return true;
+        }
+
+        if (Mouse.current.leftButton.isPressed)
+        {
+            add = true;
+            return true;
+        }
+
+        return false;
     }
 
     private void CreateOrRefreshAnchorMarker()
