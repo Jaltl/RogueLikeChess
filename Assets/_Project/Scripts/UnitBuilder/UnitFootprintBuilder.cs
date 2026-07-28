@@ -87,7 +87,7 @@ public class UnitFootprintBuilder : MonoBehaviour
     private float SideLength => geometrySource != null ? geometrySource.sideLength : fallbackSideLength;
     private float TriangleHeight => SideLength * Mathf.Sqrt(3f) * 0.5f;
 
-    private bool isPainting = false;
+    //private bool isPainting = false;
     private Vector2Int? lastPaintedCoord;
     private bool? lastPaintWasAdd;
 
@@ -352,37 +352,39 @@ public class UnitFootprintBuilder : MonoBehaviour
         if (add)
         {
             if (isEditingBase)
-            {
-                // Adding base changes if it is not already base.
-                // It also removes support if support somehow exists there.
                 return !baseSelection.Contains(coord) || supportSelection.Contains(coord);
-            }
 
             if (isEditingSupport)
-            {
-                // Support cannot cover base.
                 return !baseSelection.Contains(coord) && !supportSelection.Contains(coord);
-            }
 
             return false;
         }
 
-        // Right mouse erase removes from either area.
-        return baseSelection.Contains(coord) || supportSelection.Contains(coord);
+        // Erase only from the currently selected area.
+        if (isEditingBase)
+            return baseSelection.Contains(coord);
+
+        if (isEditingSupport)
+            return supportSelection.Contains(coord);
+
+        return false;
     }
     private void ApplyPaintToTriangle(Vector2Int coord, bool add)
     {
         if (!views.ContainsKey(coord))
             return;
 
+        bool isEditingBase = currentArea == UnitFootprintArea.BaseSize;
+        bool isEditingSupport = currentArea == UnitFootprintArea.SupportRange;
+
         if (add)
         {
-            if (currentArea == UnitFootprintArea.BaseSize)
+            if (isEditingBase)
             {
                 baseSelection.Add(coord);
                 supportSelection.Remove(coord);
             }
-            else
+            else if (isEditingSupport)
             {
                 if (!baseSelection.Contains(coord))
                     supportSelection.Add(coord);
@@ -390,9 +392,11 @@ public class UnitFootprintBuilder : MonoBehaviour
         }
         else
         {
-            // Right mouse should erase regardless of current Base/Support tab.
-            baseSelection.Remove(coord);
-            supportSelection.Remove(coord);
+            // Erase only from the currently selected area.
+            if (isEditingBase)
+                baseSelection.Remove(coord);
+            else if (isEditingSupport)
+                supportSelection.Remove(coord);
         }
     }
 
@@ -680,15 +684,15 @@ public class UnitFootprintBuilder : MonoBehaviour
         RefreshUiState();
     }
 
-    public void SetPaintSelect()
-    {
-        isPainting = true;
-    }
+    // public void SetPaintSelect()
+    // {
+    //     isPainting = true;
+    // }
 
-    public void SetPaintDeselect()
-    {
-        isPainting = false;
-    }
+    // public void SetPaintDeselect()
+    // {
+    //     isPainting = false;
+    // }
 
     public void ToggleAnchorMarker()
     {
@@ -782,8 +786,8 @@ public class UnitFootprintBuilder : MonoBehaviour
         RegisterAction(baseSizeAction, OnBaseSizeInput, register);
         RegisterAction(supportRangeAction, OnSupportRangeInput, register);
         RegisterAction(finishedAction, OnFinishedInput, register);
-        RegisterAction(selectAction, OnSelectInput, register);
-        RegisterAction(deselectAction, OnDeselectInput, register);
+        // RegisterAction(selectAction, OnSelectInput, register);
+        // RegisterAction(deselectAction, OnDeselectInput, register);
         RegisterAction(fillAction, OnFillInput, register);
         RegisterAction(mirrorAction, OnMirrorInput, register);
         RegisterAction(undoAction, OnUndoInput, register);
@@ -822,8 +826,8 @@ public class UnitFootprintBuilder : MonoBehaviour
     private void OnBaseSizeInput(InputAction.CallbackContext context) => SetTargetBaseSize();
     private void OnSupportRangeInput(InputAction.CallbackContext context) => SetTargetSupportRange();
     private void OnFinishedInput(InputAction.CallbackContext context) => SaveToUnitDefinition();
-    private void OnSelectInput(InputAction.CallbackContext context) => SetPaintSelect();
-    private void OnDeselectInput(InputAction.CallbackContext context) => SetPaintDeselect();
+    // private void OnSelectInput(InputAction.CallbackContext context) => SetPaintSelect();
+    // private void OnDeselectInput(InputAction.CallbackContext context) => SetPaintDeselect();
     private void OnFillInput(InputAction.CallbackContext context) => FillCurrentRows();
     private void OnMirrorInput(InputAction.CallbackContext context) => ToggleMirrorPainting();
     private void OnUndoInput(InputAction.CallbackContext context) => Undo();
